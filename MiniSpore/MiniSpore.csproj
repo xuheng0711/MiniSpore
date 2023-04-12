@@ -91,5 +91,8 @@
   <ItemGroup>
     <None Include="Resources\pictureBox6.Image.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SystemSetting.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

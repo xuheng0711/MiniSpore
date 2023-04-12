@@ -20,7 +20,7 @@ namespace MiniSpore
 
         private void Main_Load(object sender, EventArgs e)
         {
-
+            cbCommunicateMode.SelectedIndex = 0;
 
         }
         private void pbMin_Click(object sender, EventArgs e)
@@ -33,6 +33,38 @@ namespace MiniSpore
             System.Environment.Exit(0);
         }
 
+        /// <summary>
+        /// 通讯方式
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void cbCommunicateMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int selectedIndex = cbCommunicateMode.SelectedIndex;
+            switch (selectedIndex)
+            {
+                case 0: tabControl1.SelectedIndex = 0; break;
+                case 1: tabControl1.SelectedIndex = 1; break;
+            }
+        }
+        /// <summary>
+        /// 修改
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnModify_Click(object sender, EventArgs e)
+        {
+
+        }
+        /// <summary>
+        /// 应用
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnApply_Click(object sender, EventArgs e)
+        {
+
+        }
 
         //窗口移动
         Point mPoint;
@@ -48,7 +80,14 @@ namespace MiniSpore
                 this.Location = new Point(this.Location.X + e.X - mPoint.X, this.Location.Y + e.Y - mPoint.Y);
             }
         }
+        /// <summary>
+        /// 系统参数设置
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void pbSetting_Click(object sender, EventArgs e)
+        {
 
-
+        }
     }
 }
