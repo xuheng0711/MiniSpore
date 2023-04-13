@@ -32,12 +32,22 @@ namespace MiniSpore
             this.panelMain = new System.Windows.Forms.Panel();
             this.panelContent = new System.Windows.Forms.Panel();
             this.gbParameter = new System.Windows.Forms.GroupBox();
+            this.btnApply = new System.Windows.Forms.Button();
+            this.btnModify = new System.Windows.Forms.Button();
             this.cbCommunicateMode = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.txtMQTTPort = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtMQTTAddress = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.TxtDevId = new System.Windows.Forms.TextBox();
+            this.txtSocketPort = new System.Windows.Forms.TextBox();
+            this.label133 = new System.Windows.Forms.Label();
+            this.txtSocketAddress = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.txtDeviceCode = new System.Windows.Forms.TextBox();
             this.label57 = new System.Windows.Forms.Label();
             this.gbDeviceMessage = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
@@ -46,33 +56,23 @@ namespace MiniSpore
             this.lblMessage = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label3 = new System.Windows.Forms.Label();
+            this.pb4 = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.lblWorkMode = new System.Windows.Forms.Label();
-            this.panelBottom = new System.Windows.Forms.Panel();
-            this.panelTitle = new System.Windows.Forms.Panel();
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.btnModify = new System.Windows.Forms.Button();
-            this.btnApply = new System.Windows.Forms.Button();
-            this.txtSocketAddress = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.txtSocketPort = new System.Windows.Forms.TextBox();
-            this.label133 = new System.Windows.Forms.Label();
-            this.lblVersion = new System.Windows.Forms.Label();
-            this.txtMQTTPort = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
-            this.txtMQTTAddress = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.pb3 = new System.Windows.Forms.PictureBox();
             this.pb2 = new System.Windows.Forms.PictureBox();
             this.pb1 = new System.Windows.Forms.PictureBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblWorkMode = new System.Windows.Forms.Label();
+            this.panelBottom = new System.Windows.Forms.Panel();
+            this.lblVersion = new System.Windows.Forms.Label();
+            this.panelTitle = new System.Windows.Forms.Panel();
+            this.pbSetting = new System.Windows.Forms.PictureBox();
+            this.lblTitle = new System.Windows.Forms.Label();
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.pbMin = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.pbSetting = new System.Windows.Forms.PictureBox();
             this.panelMain.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.gbParameter.SuspendLayout();
@@ -83,17 +83,17 @@ namespace MiniSpore
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.panelBottom.SuspendLayout();
-            this.panelTitle.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb4)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pb1)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.panelBottom.SuspendLayout();
+            this.panelTitle.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).BeginInit();
             this.SuspendLayout();
             // 
             // panelMain
@@ -126,7 +126,7 @@ namespace MiniSpore
             this.gbParameter.Controls.Add(this.cbCommunicateMode);
             this.gbParameter.Controls.Add(this.label5);
             this.gbParameter.Controls.Add(this.tabControl1);
-            this.gbParameter.Controls.Add(this.TxtDevId);
+            this.gbParameter.Controls.Add(this.txtDeviceCode);
             this.gbParameter.Controls.Add(this.label57);
             this.gbParameter.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gbParameter.Font = new System.Drawing.Font("宋体", 14.25F, System.Drawing.FontStyle.Bold);
@@ -138,9 +138,36 @@ namespace MiniSpore
             this.gbParameter.TabStop = false;
             this.gbParameter.Text = "设备参数配置";
             // 
+            // btnApply
+            // 
+            this.btnApply.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
+            this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnApply.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnApply.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnApply.Location = new System.Drawing.Point(837, 26);
+            this.btnApply.Name = "btnApply";
+            this.btnApply.Size = new System.Drawing.Size(80, 32);
+            this.btnApply.TabIndex = 115;
+            this.btnApply.Text = "应用";
+            this.btnApply.UseVisualStyleBackColor = false;
+            this.btnApply.Click += new System.EventHandler(this.btnApply_Click);
+            // 
+            // btnModify
+            // 
+            this.btnModify.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
+            this.btnModify.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnModify.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnModify.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnModify.Location = new System.Drawing.Point(737, 26);
+            this.btnModify.Name = "btnModify";
+            this.btnModify.Size = new System.Drawing.Size(80, 32);
+            this.btnModify.TabIndex = 114;
+            this.btnModify.Text = "修改";
+            this.btnModify.UseVisualStyleBackColor = false;
+            this.btnModify.Click += new System.EventHandler(this.btnModify_Click);
+            // 
             // cbCommunicateMode
             // 
-            this.cbCommunicateMode.Enabled = false;
             this.cbCommunicateMode.Font = new System.Drawing.Font("宋体", 13.5F);
             this.cbCommunicateMode.FormattingEnabled = true;
             this.cbCommunicateMode.Items.AddRange(new object[] {
@@ -192,6 +219,46 @@ namespace MiniSpore
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // txtMQTTPort
+            // 
+            this.txtMQTTPort.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtMQTTPort.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.txtMQTTPort.Location = new System.Drawing.Point(323, 86);
+            this.txtMQTTPort.Name = "txtMQTTPort";
+            this.txtMQTTPort.Size = new System.Drawing.Size(264, 26);
+            this.txtMQTTPort.TabIndex = 17;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label4.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.label4.Location = new System.Drawing.Point(223, 89);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(96, 16);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "MQTT端口号:";
+            // 
+            // txtMQTTAddress
+            // 
+            this.txtMQTTAddress.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtMQTTAddress.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.txtMQTTAddress.Location = new System.Drawing.Point(323, 34);
+            this.txtMQTTAddress.Name = "txtMQTTAddress";
+            this.txtMQTTAddress.Size = new System.Drawing.Size(264, 26);
+            this.txtMQTTAddress.TabIndex = 15;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label6.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.label6.Location = new System.Drawing.Point(238, 37);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(80, 16);
+            this.label6.TabIndex = 14;
+            this.label6.Text = "MQTT地址:";
+            // 
             // tabPage2
             // 
             this.tabPage2.BackColor = System.Drawing.SystemColors.Control;
@@ -206,14 +273,53 @@ namespace MiniSpore
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
-            // TxtDevId
+            // txtSocketPort
             // 
-            this.TxtDevId.Enabled = false;
-            this.TxtDevId.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.TxtDevId.Location = new System.Drawing.Point(99, 32);
-            this.TxtDevId.Name = "TxtDevId";
-            this.TxtDevId.Size = new System.Drawing.Size(264, 26);
-            this.TxtDevId.TabIndex = 110;
+            this.txtSocketPort.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtSocketPort.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.txtSocketPort.Location = new System.Drawing.Point(338, 86);
+            this.txtSocketPort.Name = "txtSocketPort";
+            this.txtSocketPort.Size = new System.Drawing.Size(264, 26);
+            this.txtSocketPort.TabIndex = 13;
+            // 
+            // label133
+            // 
+            this.label133.AutoSize = true;
+            this.label133.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label133.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.label133.Location = new System.Drawing.Point(222, 89);
+            this.label133.Name = "label133";
+            this.label133.Size = new System.Drawing.Size(112, 16);
+            this.label133.TabIndex = 12;
+            this.label133.Text = "Socket端口号:";
+            // 
+            // txtSocketAddress
+            // 
+            this.txtSocketAddress.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtSocketAddress.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.txtSocketAddress.Location = new System.Drawing.Point(338, 34);
+            this.txtSocketAddress.Name = "txtSocketAddress";
+            this.txtSocketAddress.Size = new System.Drawing.Size(264, 26);
+            this.txtSocketAddress.TabIndex = 4;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.label7.Location = new System.Drawing.Point(238, 37);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(96, 16);
+            this.label7.TabIndex = 3;
+            this.label7.Text = "Socket地址:";
+            // 
+            // txtDeviceCode
+            // 
+            this.txtDeviceCode.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.txtDeviceCode.Location = new System.Drawing.Point(99, 32);
+            this.txtDeviceCode.Name = "txtDeviceCode";
+            this.txtDeviceCode.Size = new System.Drawing.Size(264, 26);
+            this.txtDeviceCode.TabIndex = 110;
             // 
             // label57
             // 
@@ -251,7 +357,7 @@ namespace MiniSpore
             this.groupBox4.Size = new System.Drawing.Size(954, 128);
             this.groupBox4.TabIndex = 3;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "信息";
+            this.groupBox4.Text = "异常";
             // 
             // lblError
             // 
@@ -286,7 +392,7 @@ namespace MiniSpore
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.label3);
-            this.groupBox2.Controls.Add(this.pictureBox2);
+            this.groupBox2.Controls.Add(this.pb4);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.label11);
@@ -311,6 +417,15 @@ namespace MiniSpore
             this.label3.Size = new System.Drawing.Size(76, 16);
             this.label3.TabIndex = 7;
             this.label3.Text = "上传数据";
+            // 
+            // pb4
+            // 
+            this.pb4.Location = new System.Drawing.Point(354, 49);
+            this.pb4.Name = "pb4";
+            this.pb4.Size = new System.Drawing.Size(64, 64);
+            this.pb4.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pb4.TabIndex = 6;
+            this.pb4.TabStop = false;
             // 
             // label2
             // 
@@ -345,6 +460,33 @@ namespace MiniSpore
             this.label11.TabIndex = 3;
             this.label11.Text = "初始化";
             // 
+            // pb3
+            // 
+            this.pb3.Location = new System.Drawing.Point(244, 49);
+            this.pb3.Name = "pb3";
+            this.pb3.Size = new System.Drawing.Size(64, 64);
+            this.pb3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pb3.TabIndex = 2;
+            this.pb3.TabStop = false;
+            // 
+            // pb2
+            // 
+            this.pb2.Location = new System.Drawing.Point(133, 49);
+            this.pb2.Name = "pb2";
+            this.pb2.Size = new System.Drawing.Size(64, 64);
+            this.pb2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pb2.TabIndex = 1;
+            this.pb2.TabStop = false;
+            // 
+            // pb1
+            // 
+            this.pb1.Location = new System.Drawing.Point(25, 49);
+            this.pb1.Name = "pb1";
+            this.pb1.Size = new System.Drawing.Size(64, 64);
+            this.pb1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pb1.TabIndex = 0;
+            this.pb1.TabStop = false;
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.lblWorkMode);
@@ -375,6 +517,16 @@ namespace MiniSpore
             this.panelBottom.Size = new System.Drawing.Size(1006, 40);
             this.panelBottom.TabIndex = 1;
             // 
+            // lblVersion
+            // 
+            this.lblVersion.AutoSize = true;
+            this.lblVersion.Font = new System.Drawing.Font("宋体", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lblVersion.ForeColor = System.Drawing.Color.White;
+            this.lblVersion.Location = new System.Drawing.Point(834, 14);
+            this.lblVersion.Name = "lblVersion";
+            this.lblVersion.Size = new System.Drawing.Size(0, 14);
+            this.lblVersion.TabIndex = 0;
+            // 
             // panelTitle
             // 
             this.panelTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
@@ -391,6 +543,18 @@ namespace MiniSpore
             this.panelTitle.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panelTitle_MouseDown);
             this.panelTitle.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panelTitle_MouseMove);
             // 
+            // pbSetting
+            // 
+            this.pbSetting.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.pbSetting.Image = global::MiniSpore.Properties.Resources.SystemSetting;
+            this.pbSetting.Location = new System.Drawing.Point(881, 6);
+            this.pbSetting.Name = "pbSetting";
+            this.pbSetting.Size = new System.Drawing.Size(32, 32);
+            this.pbSetting.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pbSetting.TabIndex = 5;
+            this.pbSetting.TabStop = false;
+            this.pbSetting.Click += new System.EventHandler(this.pbSetting_Click);
+            // 
             // lblTitle
             // 
             this.lblTitle.AutoSize = true;
@@ -401,165 +565,6 @@ namespace MiniSpore
             this.lblTitle.Size = new System.Drawing.Size(550, 40);
             this.lblTitle.TabIndex = 4;
             this.lblTitle.Text = "迷你智能孢子捕捉预测分析仪";
-            // 
-            // btnModify
-            // 
-            this.btnModify.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
-            this.btnModify.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnModify.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btnModify.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnModify.Location = new System.Drawing.Point(737, 26);
-            this.btnModify.Name = "btnModify";
-            this.btnModify.Size = new System.Drawing.Size(80, 32);
-            this.btnModify.TabIndex = 114;
-            this.btnModify.Text = "修改";
-            this.btnModify.UseVisualStyleBackColor = false;
-            this.btnModify.Click += new System.EventHandler(this.btnModify_Click);
-            // 
-            // btnApply
-            // 
-            this.btnApply.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
-            this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnApply.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btnApply.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnApply.Location = new System.Drawing.Point(837, 26);
-            this.btnApply.Name = "btnApply";
-            this.btnApply.Size = new System.Drawing.Size(80, 32);
-            this.btnApply.TabIndex = 115;
-            this.btnApply.Text = "应用";
-            this.btnApply.UseVisualStyleBackColor = false;
-            this.btnApply.Click += new System.EventHandler(this.btnApply_Click);
-            // 
-            // txtSocketAddress
-            // 
-            this.txtSocketAddress.Enabled = false;
-            this.txtSocketAddress.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.txtSocketAddress.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.txtSocketAddress.Location = new System.Drawing.Point(338, 34);
-            this.txtSocketAddress.Name = "txtSocketAddress";
-            this.txtSocketAddress.Size = new System.Drawing.Size(264, 26);
-            this.txtSocketAddress.TabIndex = 4;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.label7.Location = new System.Drawing.Point(238, 37);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(96, 16);
-            this.label7.TabIndex = 3;
-            this.label7.Text = "Socket地址:";
-            // 
-            // txtSocketPort
-            // 
-            this.txtSocketPort.Enabled = false;
-            this.txtSocketPort.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.txtSocketPort.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.txtSocketPort.Location = new System.Drawing.Point(338, 86);
-            this.txtSocketPort.Name = "txtSocketPort";
-            this.txtSocketPort.Size = new System.Drawing.Size(264, 26);
-            this.txtSocketPort.TabIndex = 13;
-            // 
-            // label133
-            // 
-            this.label133.AutoSize = true;
-            this.label133.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label133.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.label133.Location = new System.Drawing.Point(222, 89);
-            this.label133.Name = "label133";
-            this.label133.Size = new System.Drawing.Size(112, 16);
-            this.label133.TabIndex = 12;
-            this.label133.Text = "Socket端口号:";
-            // 
-            // lblVersion
-            // 
-            this.lblVersion.AutoSize = true;
-            this.lblVersion.Font = new System.Drawing.Font("宋体", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.lblVersion.ForeColor = System.Drawing.Color.White;
-            this.lblVersion.Location = new System.Drawing.Point(729, 14);
-            this.lblVersion.Name = "lblVersion";
-            this.lblVersion.Size = new System.Drawing.Size(21, 14);
-            this.lblVersion.TabIndex = 0;
-            this.lblVersion.Text = "00";
-            // 
-            // txtMQTTPort
-            // 
-            this.txtMQTTPort.Enabled = false;
-            this.txtMQTTPort.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.txtMQTTPort.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.txtMQTTPort.Location = new System.Drawing.Point(323, 86);
-            this.txtMQTTPort.Name = "txtMQTTPort";
-            this.txtMQTTPort.Size = new System.Drawing.Size(264, 26);
-            this.txtMQTTPort.TabIndex = 17;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label4.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.label4.Location = new System.Drawing.Point(223, 89);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(96, 16);
-            this.label4.TabIndex = 16;
-            this.label4.Text = "MQTT端口号:";
-            // 
-            // txtMQTTAddress
-            // 
-            this.txtMQTTAddress.Enabled = false;
-            this.txtMQTTAddress.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.txtMQTTAddress.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.txtMQTTAddress.Location = new System.Drawing.Point(323, 34);
-            this.txtMQTTAddress.Name = "txtMQTTAddress";
-            this.txtMQTTAddress.Size = new System.Drawing.Size(264, 26);
-            this.txtMQTTAddress.TabIndex = 15;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("宋体", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label6.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.label6.Location = new System.Drawing.Point(238, 37);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(80, 16);
-            this.label6.TabIndex = 14;
-            this.label6.Text = "MQTT地址:";
-            // 
-            // pictureBox2
-            // 
-            this.pictureBox2.Location = new System.Drawing.Point(354, 49);
-            this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(64, 64);
-            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox2.TabIndex = 6;
-            this.pictureBox2.TabStop = false;
-            // 
-            // pb3
-            // 
-            this.pb3.Location = new System.Drawing.Point(244, 49);
-            this.pb3.Name = "pb3";
-            this.pb3.Size = new System.Drawing.Size(64, 64);
-            this.pb3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb3.TabIndex = 2;
-            this.pb3.TabStop = false;
-            // 
-            // pb2
-            // 
-            this.pb2.Location = new System.Drawing.Point(133, 49);
-            this.pb2.Name = "pb2";
-            this.pb2.Size = new System.Drawing.Size(64, 64);
-            this.pb2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb2.TabIndex = 1;
-            this.pb2.TabStop = false;
-            // 
-            // pb1
-            // 
-            this.pb1.Location = new System.Drawing.Point(25, 49);
-            this.pb1.Name = "pb1";
-            this.pb1.Size = new System.Drawing.Size(64, 64);
-            this.pb1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pb1.TabIndex = 0;
-            this.pb1.TabStop = false;
             // 
             // pbClose
             // 
@@ -592,18 +597,6 @@ namespace MiniSpore
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             // 
-            // pbSetting
-            // 
-            this.pbSetting.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.pbSetting.Image = global::MiniSpore.Properties.Resources.SystemSetting;
-            this.pbSetting.Location = new System.Drawing.Point(881, 4);
-            this.pbSetting.Name = "pbSetting";
-            this.pbSetting.Size = new System.Drawing.Size(32, 32);
-            this.pbSetting.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
-            this.pbSetting.TabIndex = 5;
-            this.pbSetting.TabStop = false;
-            this.pbSetting.Click += new System.EventHandler(this.pbSetting_Click);
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -631,20 +624,20 @@ namespace MiniSpore
             this.groupBox3.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pb4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb3)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pb1)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.panelBottom.ResumeLayout(false);
             this.panelBottom.PerformLayout();
             this.panelTitle.ResumeLayout(false);
             this.panelTitle.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb3)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pb1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -672,11 +665,11 @@ namespace MiniSpore
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.PictureBox pictureBox2;
+        private System.Windows.Forms.PictureBox pb4;
         private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Label lblError;
-        private System.Windows.Forms.TextBox TxtDevId;
+        private System.Windows.Forms.TextBox txtDeviceCode;
         private System.Windows.Forms.Label label57;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;

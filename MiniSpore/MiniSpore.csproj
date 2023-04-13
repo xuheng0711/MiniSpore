@@ -45,6 +45,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\Base64Encoder.cs" />
+    <Compile Include="Common\DebOutPut.cs" />
+    <Compile Include="Common\HttpRequest.cs" />
+    <Compile Include="Common\Param.cs" />
+    <Compile Include="Common\PubField.cs" />
+    <Compile Include="Common\Tools.cs" />
+    <Compile Include="Common\Win32API.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>

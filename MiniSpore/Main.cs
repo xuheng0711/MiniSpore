@@ -1,10 +1,13 @@
-﻿using System;
+﻿using MiniSpore.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Resources;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -12,26 +15,61 @@ namespace MiniSpore
 {
     public partial class Main : Form
     {
+        ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
+        private Image imageProcess = null;
         public Main()
         {
-
             InitializeComponent();
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-            cbCommunicateMode.SelectedIndex = 0;
+            //获取流程图标
+            imageProcess = (Image)resources.GetObject("pictureBox6_Image");
+            //初始化控件
+            Thread workThread = new Thread(new ThreadStart(Init));
+            workThread.IsBackground = true;
+            workThread.Start();
 
         }
-        private void pbMin_Click(object sender, EventArgs e)
+
+
+        private void Init()
         {
-            this.WindowState = FormWindowState.Minimized;
+            this.Invoke(new EventHandler(delegate
+            {
+                setControlAvailable(false);
+                string currVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
+                lblVersion.Text = string.Format("当前版本：V_{0}", currVersion);
+            }));
+
         }
 
-        private void pbClose_Click(object sender, EventArgs e)
+        /// <summary>
+        /// 设置流程显示
+        /// </summary>
+        /// <param name="pictureBox"></param>
+        private void setProcess(PictureBox pictureBox)
         {
-            System.Environment.Exit(0);
+            pictureBox.Image = null;
+            pictureBox.Image = imageProcess;
         }
+
+        /// <summary>
+        /// 设置控件是否可用
+        /// </summary>
+        /// <param name="bEnabled"></param>
+        private void setControlAvailable(bool bEnabled)
+        {
+            txtDeviceCode.Enabled = bEnabled;
+            cbCommunicateMode.Enabled = bEnabled;
+            txtMQTTAddress.Enabled = bEnabled;
+            txtMQTTPort.Enabled = bEnabled;
+            txtSocketAddress.Enabled = bEnabled;
+            txtSocketPort.Enabled = bEnabled;
+        }
+
+
 
         /// <summary>
         /// 通讯方式
@@ -54,7 +92,7 @@ namespace MiniSpore
         /// <param name="e"></param>
         private void btnModify_Click(object sender, EventArgs e)
         {
-
+            setControlAvailable(true);
         }
         /// <summary>
         /// 应用
@@ -64,6 +102,28 @@ namespace MiniSpore
         private void btnApply_Click(object sender, EventArgs e)
         {
 
+
+
+
+            setControlAvailable(false);
+        }
+        /// <summary>
+        /// 最小化
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void pbMin_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
+        }
+        /// <summary>
+        /// 关闭
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void pbClose_Click(object sender, EventArgs e)
+        {
+            System.Environment.Exit(0);
         }
 
         //窗口移动
