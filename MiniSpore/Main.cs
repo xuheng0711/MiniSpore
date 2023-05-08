@@ -51,7 +51,14 @@ namespace MiniSpore
         /// <param name="pictureBox"></param>
         private void setProcess(PictureBox pictureBox)
         {
-            pictureBox.Image = null;
+            foreach (Control control in gbProcess.Controls)
+            {
+                if (control is PictureBox)
+                {
+                    PictureBox picture = (PictureBox)control;
+                    picture.Image = null;
+                }
+            }
             pictureBox.Image = imageProcess;
         }
 
@@ -101,8 +108,6 @@ namespace MiniSpore
         /// <param name="e"></param>
         private void btnApply_Click(object sender, EventArgs e)
         {
-
-
 
 
             setControlAvailable(false);
