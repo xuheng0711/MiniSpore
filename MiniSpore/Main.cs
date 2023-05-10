@@ -15,12 +15,18 @@ using System.Resources;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 
 namespace MiniSpore
 {
     public partial class Main : Form
     {
+
+        private string errorMessage = "";
+
+        ////配置文件地址
+        private string configfilePath = PubField.pathBase + "\\Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
         private Image imageProcess = null;
 
@@ -30,6 +36,24 @@ namespace MiniSpore
         List<CCameraInfo> m_ltDeviceList = new List<CCameraInfo>();
         bool m_bGrabbing = false;//是否采集
         #endregion
+
+        #region
+
+        int inTimer1 = 0;
+        System.Timers.Timer timer1 = new System.Timers.Timer();
+
+        private void Timer1Start()
+        {
+            timer1.Start();
+        }
+        private void Timer1Stop()
+        {
+            timer1.Stop();
+            Interlocked.Exchange(ref inTimer1, 0);
+        }
+
+        #endregion
+
 
         public Main()
         {
@@ -47,7 +71,6 @@ namespace MiniSpore
 
         }
 
-
         private void Init()
         {
             this.Invoke(new EventHandler(delegate
@@ -58,6 +81,32 @@ namespace MiniSpore
             }));
 
         }
+
+        /// <summary>
+        /// 时间控件初始化
+        /// </summary>
+        private void TimerInit()
+        {
+            timer1.Elapsed += new ElapsedEventHandler(timer1_Elapsed);
+            timer1.Interval = 1000 ;
+
+        }
+
+        ///// <summary>
+        ///// 工作流程
+        ///// </summary>
+        ///// <param name="sender"></param>
+        ///// <param name="e"></param>
+        private void timer1_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (Interlocked.Exchange(ref inTimer1, 1) == 0)
+            {
+
+
+                Interlocked.Exchange(ref inTimer1, 0);
+            }
+        }
+
 
         /// <summary>
         /// 设置流程显示
@@ -89,7 +138,6 @@ namespace MiniSpore
             txtSocketAddress.Enabled = bEnabled;
             txtSocketPort.Enabled = bEnabled;
         }
-
 
 
         /// <summary>
@@ -129,16 +177,16 @@ namespace MiniSpore
         /// <summary>
         /// 搜索设备
         /// </summary>
-        private void SeacehDev()
+        private bool SearchDev()
         {
             try
             {
                 cbDeviceList.Items.Clear();
-                m_ltDeviceList.Clear();
+                m_ltDeviceList.Clear(); 
                 int nRet = CSystem.EnumDevices(CSystem.MV_GIGE_DEVICE | CSystem.MV_USB_DEVICE, ref m_ltDeviceList);
                 if (0 != nRet)
                 {
-                    return;
+                    return false;
                 }
                 // ch:在窗体列表中显示设备名 | en:Display device name in the form list
                 for (int i = 0; i < m_ltDeviceList.Count; i++)
@@ -171,28 +219,31 @@ namespace MiniSpore
                 }
 
                 // ch:选择第一项 | en:Select the first item
-                if (m_ltDeviceList.Count != 0)
+                if (m_ltDeviceList.Count == 0)
                 {
-                    cbDeviceList.SelectedIndex = 0;
+                    return false;
                 }
+                cbDeviceList.SelectedIndex = 0;
+                return true;
             }
             catch (Exception ex)
             {
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "SeacehDev异常：" + ex.Message);
+                return false;
             }
         }
 
         /// <summary>
         /// 打开设备
         /// </summary>
-        private void OpenDev()
+        private bool OpenDev()
         {
             try
             {
                 if (m_ltDeviceList.Count == 0 || cbDeviceList.SelectedIndex == -1)
                 {
-                    MessageBox.Show("未检索到相机！", "提醒", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "未检索到相机");
+                    return false;
                 }
 
                 // ch:获取选择的设备信息 | en:Get selected device information
@@ -203,21 +254,21 @@ namespace MiniSpore
                     m_MyCamera = new CCamera();
                     if (null == m_MyCamera)
                     {
-                        return;
+                        return false;
                     }
                 }
 
                 int nRet = m_MyCamera.CreateHandle(ref device);
                 if (CErrorDefine.MV_OK != nRet)
                 {
-                    return;
+                    return false;
                 }
 
                 nRet = m_MyCamera.OpenDevice();
                 if (CErrorDefine.MV_OK != nRet)
                 {
                     m_MyCamera.DestroyHandle();
-                    return;
+                    return false;
                 }
 
                 // ch:探测网络最佳包大小(只对GigE相机有效) | en:Detection network optimal package size(It only works for the GigE camera)
@@ -241,10 +292,12 @@ namespace MiniSpore
                 // ch:设置采集连续模式 | en:Set Continues Aquisition Mode
                 m_MyCamera.SetEnumValue("AcquisitionMode", (uint)MV_CAM_ACQUISITION_MODE.MV_ACQ_MODE_SINGLE);
                 m_MyCamera.SetEnumValue("TriggerMode", (uint)MV_CAM_TRIGGER_MODE.MV_TRIGGER_MODE_OFF);
+                return true;
             }
             catch (Exception ex)
             {
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "OpenDev异常：" + ex.Message);
+                return false;
             }
 
         }

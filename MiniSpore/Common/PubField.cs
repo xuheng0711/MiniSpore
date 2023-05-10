@@ -14,7 +14,6 @@ namespace MiniSpore.Common
         /// 可执行文件目录，不包含可执行文件名称
         /// </summary>
         public static string pathBase = System.Windows.Forms.Application.StartupPath;
-        public static string str = "";
     }
 
     /// <summary>

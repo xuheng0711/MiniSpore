@@ -355,7 +355,7 @@ namespace MiniSpore
             this.groupBox4.Size = new System.Drawing.Size(762, 60);
             this.groupBox4.TabIndex = 3;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "异常";
+            this.groupBox4.Text = "异常消息";
             // 
             // lblError
             // 
@@ -364,9 +364,8 @@ namespace MiniSpore
             this.lblError.ForeColor = System.Drawing.Color.Red;
             this.lblError.Location = new System.Drawing.Point(22, 28);
             this.lblError.Name = "lblError";
-            this.lblError.Size = new System.Drawing.Size(26, 18);
+            this.lblError.Size = new System.Drawing.Size(0, 18);
             this.lblError.TabIndex = 1;
-            this.lblError.Text = "00";
             // 
             // groupBox3
             // 
@@ -559,11 +558,11 @@ namespace MiniSpore
             // lblTitle
             // 
             this.lblTitle.AutoSize = true;
-            this.lblTitle.Font = new System.Drawing.Font("宋体", 30F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lblTitle.Font = new System.Drawing.Font("宋体", 28F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.lblTitle.ForeColor = System.Drawing.Color.White;
-            this.lblTitle.Location = new System.Drawing.Point(93, 18);
+            this.lblTitle.Location = new System.Drawing.Point(87, 19);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(550, 40);
+            this.lblTitle.Size = new System.Drawing.Size(524, 38);
             this.lblTitle.TabIndex = 4;
             this.lblTitle.Text = "迷你智能孢子捕捉预测分析仪";
             // 
