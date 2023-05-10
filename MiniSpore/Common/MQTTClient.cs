@@ -1,16 +1,20 @@
-﻿using MiniSpore.Model;
+﻿using Aliyun.OSS;
+using MiniSpore.Model;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using uPLibrary.Networking.M2Mqtt;
+using uPLibrary.Networking.M2Mqtt.Messages;
 
 namespace MiniSpore.Common
 {
     public class MQTTClient
     {
+
         private static Main form;//主界面对话框
         MQTTModel mQTTModel = null;//MQTT对象
         /// <summary>
@@ -68,7 +72,6 @@ namespace MiniSpore.Common
             }
         }
 
-
         /// <summary>
         /// 定时发送心跳帧
         /// </summary>
@@ -80,15 +83,14 @@ namespace MiniSpore.Common
             {
                 if (client != null && client.IsConnected)
                 {
-                    MQTTMessage message = new MQTTMessage()
+                    Model.Protocol message = new Model.Protocol()
                     {
                         message = "keep-alive",
                         devId = Param.DeviceID,
                         func = 100,
                         err = ""
                     };
-                    string jsonData=JsonConvert.SerializeObject(message);
-                    publishMessage(jsonData,true);
+                    publishMessage(JsonConvert.SerializeObject(message));
                 }
             }
             catch (Exception ex)
@@ -96,7 +98,246 @@ namespace MiniSpore.Common
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
             }
         }
+        /// <summary>
+        /// 实例化MQTT客户端
+        /// </summary>
+        public void BuildMqttClient()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Param.ServerIP) || string.IsNullOrEmpty(Param.ServerPort))
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未设置MQTT服务器地址或端口号信息");
+                    return;
+                }
+                client = new MqttClient("1111", int.Parse("00"), false, MqttSslProtocols.TLSv1_2, null, null);
+                client.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;//接收消息
+                client.ConnectionClosed += Client_ConnectionClosed;//服务器主动断开重新连接
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, string.Format("实例化MQTT客户端异常：{0}", ex.ToString()));
+            }
+        }
 
+        /// <summary>
+        /// MQTT接收消息
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        {
+            try
+            {
+                //处理接收到的消息  
+                string strReceiveMessage = Encoding.UTF8.GetString(e.Message);
+                if (form.InvokeRequired)
+                {
+                    MqttClient.MqttMsgPublishEventHandler setpos = new MqttClient.MqttMsgPublishEventHandler(Client_MqttMsgPublishReceived);
+                    form.Invoke(setpos, new object[] { sender }, e);
+                }
+                else
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("主题【{0}】，接收消息：{1}", e.Topic, strReceiveMessage));
+                    if (string.IsNullOrEmpty(strReceiveMessage))
+                    {
+                        return;
+                    }
+                    Model.Protocol modelMessage = JsonConvert.DeserializeObject<Model.Protocol>(strReceiveMessage);
+                    if (modelMessage.devId != Param.DeviceID)
+                    {
+                        return;
+                    }
+                    form.DealMsg(strReceiveMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, string.Format("接收异常消息：{0}", ex.ToString()));
+            }
+
+        }
+
+        /// <summary>
+        /// Mqtt连接断开
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Client_ConnectionClosed(object sender, EventArgs e)
+        {
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "mqtt连接：" + client.IsConnected);
+            if (!client.IsConnected)
+            {
+                TryContinueConnect(); // 尝试重连
+            }
+        }
+
+        /// <summary>
+        ///  自动重连主体
+        /// </summary>
+        private void TryContinueConnect()
+        {
+            if (client.IsConnected)
+                return;
+            Thread retryThread = new Thread(new ThreadStart(delegate
+            {
+                while (client == null || !client.IsConnected)
+                {
+                    if (client.IsConnected)
+                        break;
+                    if (client == null)
+                    {
+                        BuildMqttClient();
+                        MqttConnect();
+                        Thread.Sleep(3000);
+                        continue;
+                    }
+                    try
+                    {
+                        MqttConnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "重新连接异常:" + ex.ToString());
+                    }
+                    // 如果还没连接不符合结束条件则睡2秒
+                    if (!client.IsConnected)
+                        Thread.Sleep(2000);
+                }
+            }));
+            retryThread.Start();
+        }
+
+
+        /// <summary>
+        /// 发起一次连接，连接成功则订阅相关主题 
+        /// </summary>
+        public void MqttConnect()
+        {
+            try
+            {
+                if (client == null)
+                {
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(Param.MQTTAccount) || string.IsNullOrEmpty(Param.MQTTPassword))
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未设置MQTT服务器ClientID、账号、密码信息");
+                    return;
+                }
+                string strClientID = Param.MQTTClientID;
+                if (string.IsNullOrEmpty(Param.MQTTClientID))
+                {
+                    strClientID = Guid.NewGuid().ToString();
+                }
+
+                client.Connect(strClientID,
+                    Param.MQTTAccount,
+                    Param.MQTTPassword,
+                    true, // 清理会话，默认为true。设置为false可以接收到QoS 1和QoS 2级别的离线消息
+                    50 // 客户端向【服务端】发送心跳的时间间隔，默认50秒，设置成0代表不启用心跳，注意不是向服务器的两个连接方
+                    );
+
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "mqtt连接：" + client.IsConnected);
+                if (client.IsConnected)
+                {
+                    client.Subscribe(new string[] { strSubscribeTopic }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("订阅主题{0}成功", strSubscribeTopic));
+                }
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "MqttConnect连接异常:" + ex.ToString());
+            }
+            finally
+            {
+                //开启定时器，定时发送心跳帧
+                if (myTimer == null)
+                {
+                    InitTimer();
+                    myTimer.Enabled = true;
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "心跳帧启动！");
+                }
+                else if (myTimer.Enabled == false)
+                {
+                    myTimer.Enabled = true;
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "心跳帧启动！");
+                }
+            }
+
+        }
+
+
+        #region 发送信息方法
+
+        /// <summary>
+        /// 发送图像信息
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        //public bool SendPicMsg(string time, string path)
+        //{
+        //    try
+        //    {
+        //        string picAliOssUrl = uploadImageAliOSS(path);
+        //        if (string.IsNullOrEmpty(picAliOssUrl))
+        //        {
+        //            return false;
+        //        }
+        //        string strDeviceID = Param.DeviceID;
+
+        //        InfoPicMsg infopic = new InfoPicMsg();
+        //        infopic.devId = strDeviceID;
+        //        infopic.devtype = 2;
+        //        infopic.func = 101;
+        //        infopic.err = "";
+        //        picMsg pic = new picMsg();
+        //        pic.collectTime = time;
+        //        pic.picStr = picAliOssUrl;//阿里云Oss图像地址
+        //        infopic.message = pic;
+        //        publishMessage(infopic.ObjectToJson());
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        DebOutPut.DebLog(ex.ToString());
+        //        DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+        //        return false;
+        //    }
+
+        //}
+
+        /// <summary>
+        /// 上传图片至阿里云OSS服务器
+        /// </summary>
+        /// <param name="picPath"></param>
+        /// <returns></returns>
+        private string uploadImageAliOSS(string picPath)
+        {
+            string picAliOssUrl = "";
+            string fileName = System.IO.Path.GetFileName(picPath);
+            //填写Object完整路径，完整路径中不能包含Bucket名称
+            var objectName = string.Format("minispore/{0}", fileName);
+            // 创建OssClient实例。
+
+            if (!string.IsNullOrEmpty(Param.OssEndPoint) && !string.IsNullOrEmpty(Param.OssAccessKeyId) && !string.IsNullOrEmpty(Param.OssAccessKeySecret) && !string.IsNullOrEmpty(Param.OssBucketName) && !string.IsNullOrEmpty(Param.OSS_Url))
+            {
+                var client = new OssClient(Param.OssEndPoint, Param.OssAccessKeyId, Param.OssAccessKeySecret);
+                client.PutObject(Param.OssBucketName, objectName, picPath);
+
+                picAliOssUrl = Param.OSS_Url + objectName;
+            }
+            else
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "阿里云OSS配置信息不完整");
+            }
+            return picAliOssUrl;
+        }
+
+
+        #endregion
 
         /// <summary>
         /// 发布消息
@@ -114,6 +355,8 @@ namespace MiniSpore.Common
                 }
             }
         }
+
+
 
     }
 }

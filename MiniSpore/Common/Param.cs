@@ -11,8 +11,30 @@ namespace MiniSpore.Common
         public static string basePath = System.Windows.Forms.Application.StartupPath;
         //设备编号
         public static string DeviceID = "";
-        //日期格式
-        public static string DateFormat = "yyyy-MM-dd HH:mm:ss";
+        public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
+        //通讯方式
+        public static string CommunicateMode = "";//0:MQTT 1:Socket
+        public static string ServerIP = "";
+        public static string ServerPort = "";
+
+        //定时运行采集时间
+        public static string CollectHour = "";
+        public static string CollectMinute = "";
+        public static string isWinRestart = "";//每天电脑是否自动重启  0否  1是
+        
+        #region MQTT服务器
+        public static string MQTTClientID = "";
+        public static string MQTTAccount = "";
+        public static string MQTTPassword = "";
+        #endregion
+
+        #region 阿里云OSS存储
+        public static string OssEndPoint = "";
+        public static string OssAccessKeyId = "";
+        public static string OssAccessKeySecret = "";
+        public static string OssBucketName = "";
+        public static string OSS_Url = "";
+        #endregion
 
         /// <summary>
         /// 初始化读取程序参数

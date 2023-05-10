@@ -34,7 +34,6 @@ namespace MiniSpore
             this.gbParameter = new System.Windows.Forms.GroupBox();
             this.btnApply = new System.Windows.Forms.Button();
             this.btnModify = new System.Windows.Forms.Button();
-            this.cbCommunicateMode = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -73,6 +72,7 @@ namespace MiniSpore
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.pbMin = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.cbCommunicateMode = new System.Windows.Forms.ComboBox();
             this.panelMain.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.gbParameter.SuspendLayout();
@@ -164,19 +164,6 @@ namespace MiniSpore
             this.btnModify.Text = "修改";
             this.btnModify.UseVisualStyleBackColor = false;
             this.btnModify.Click += new System.EventHandler(this.btnModify_Click);
-            // 
-            // cbCommunicateMode
-            // 
-            this.cbCommunicateMode.Font = new System.Drawing.Font("宋体", 13.5F);
-            this.cbCommunicateMode.FormattingEnabled = true;
-            this.cbCommunicateMode.Items.AddRange(new object[] {
-            "MQTT",
-            "Socket"});
-            this.cbCommunicateMode.Location = new System.Drawing.Point(422, 25);
-            this.cbCommunicateMode.Name = "cbCommunicateMode";
-            this.cbCommunicateMode.Size = new System.Drawing.Size(123, 26);
-            this.cbCommunicateMode.TabIndex = 113;
-            this.cbCommunicateMode.SelectedIndexChanged += new System.EventHandler(this.cbCommunicateMode_SelectedIndexChanged);
             // 
             // label5
             // 
@@ -597,6 +584,19 @@ namespace MiniSpore
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             // 
+            // cbCommunicateMode
+            // 
+            this.cbCommunicateMode.Font = new System.Drawing.Font("宋体", 13.5F);
+            this.cbCommunicateMode.FormattingEnabled = true;
+            this.cbCommunicateMode.Items.AddRange(new object[] {
+            "MQTT",
+            "Socket"});
+            this.cbCommunicateMode.Location = new System.Drawing.Point(422, 25);
+            this.cbCommunicateMode.Name = "cbCommunicateMode";
+            this.cbCommunicateMode.Size = new System.Drawing.Size(123, 26);
+            this.cbCommunicateMode.TabIndex = 113;
+            this.cbCommunicateMode.SelectedIndexChanged += new System.EventHandler(this.cbCommunicateMode_SelectedIndexChanged);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -674,7 +674,6 @@ namespace MiniSpore
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.ComboBox cbCommunicateMode;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.Button btnModify;
@@ -688,6 +687,7 @@ namespace MiniSpore
         private System.Windows.Forms.TextBox txtMQTTAddress;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.PictureBox pbSetting;
+        private System.Windows.Forms.ComboBox cbCommunicateMode;
     }
 }
 

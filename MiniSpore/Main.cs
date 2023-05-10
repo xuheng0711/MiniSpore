@@ -3,8 +3,10 @@ using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using MiniSpore.Common;
+using MiniSpore.Model;
 using MvCamCtrl.NET;
 using MvCamCtrl.NET.CameraParams;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -106,12 +108,16 @@ namespace MiniSpore
 
         private void Main_Load(object sender, EventArgs e)
         {
+            string dbPath = PubField.pathBase + "\\data.sqlite";
+            SQLiteHelper.SetConnectionString(dbPath);//设置数据库地址
             //初始化
             TimerInit();
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
             workThread.Start();
+            //初始化通讯方式
+
         }
 
         private void Init()
@@ -199,25 +205,75 @@ namespace MiniSpore
         /// 收集孢子
         /// </summary>
         private void CollectSpore()
-        { 
-               
+        {
+
         }
 
         /// <summary>
         /// 拍照
         /// </summary>
         private void TakePhotos()
-        { 
-        
-        
+        {
+
+
         }
 
         /// <summary>
         /// 上传数据
         /// </summary>
         private void UploadData()
-        { 
-        
+        {
+
+        }
+
+
+        /// <summary>
+        /// 处理消息
+        /// </summary>
+        /// <param name="jsonText"></param>
+        public void DealMsg(string jsonText)
+        {
+            int func = -1;
+            try
+            {
+                if (string.IsNullOrEmpty(jsonText))
+                {
+                    return;
+                }
+                Protocol Message = JsonConvert.DeserializeObject<Protocol>(jsonText);
+                if (Message == null || string.IsNullOrEmpty(Message.devId) || Message.devId != Param.DeviceID)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收到的数据不合法！数据：" + jsonText);
+                    return;
+                }
+                func = Message.func;
+                if (func == 100)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "接收数据:" + jsonText);
+                }
+                else
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收数据:" + jsonText);
+                }
+                switch (func)
+                {
+                    case 101:
+
+                        break;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                if (func == -1)
+                {
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "接收到的数据不合法！接收数据：" + jsonText + "\r\n错误信息：" + ex.ToString());
+                }
+                else
+                {
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "功能码：" + func + " Err！\r\n接收数据：" + jsonText + "\r\n错误信息：" + ex.ToString());
+                }
+            }
         }
 
         /// <summary>

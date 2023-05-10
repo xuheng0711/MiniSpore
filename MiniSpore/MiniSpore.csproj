@@ -55,6 +55,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Aliyun.OSS, Version=2.13.0.0, Culture=neutral, PublicKeyToken=0ad4175f0dac0b9b, processorArchitecture=MSIL">
+      <HintPath>packages\Aliyun.OSS.SDK.2.13.0\lib\net45\Aliyun.OSS.dll</HintPath>
+    </Reference>
     <Reference Include="Emgu.CV.UI, Version=4.1.0.3420, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
       <HintPath>packages\EMGU.CV.4.1.0.3420\lib\net35\Emgu.CV.UI.dll</HintPath>
     </Reference>
@@ -94,6 +97,7 @@
     <Compile Include="Common\MQTTClient.cs" />
     <Compile Include="Common\Param.cs" />
     <Compile Include="Common\PubField.cs" />
+    <Compile Include="Common\SQLiteHelper.cs" />
     <Compile Include="Common\Tools.cs" />
     <Compile Include="Common\Win32API.cs" />
     <Compile Include="Main.cs">
@@ -103,7 +107,7 @@
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\MQTTClientInfo.cs" />
-    <Compile Include="Model\MQTTMessage.cs" />
+    <Compile Include="Model\Protocol.cs" />
     <Compile Include="Model\MQTTModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

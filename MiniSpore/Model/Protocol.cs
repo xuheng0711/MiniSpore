@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MiniSpore.Model
 {
-    public class MQTTMessage
+    public class Protocol
     {
         /// <summary>
         /// 功能码
@@ -25,4 +25,11 @@ namespace MiniSpore.Model
         /// </summary>
         public object message { get; set; }
     }
+
+    public class CollectInfo
+    {
+        public string collectTime { get; set; }
+        public string picUrl { get; set; }
+    }
+
 }
