@@ -24,7 +24,8 @@ namespace MiniSpore
     {
 
         private string errorMessage = "";
-
+        //位置标记
+        private int step = -1;
         ////配置文件地址
         private string configfilePath = PubField.pathBase + "\\Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
@@ -37,10 +38,25 @@ namespace MiniSpore
         bool m_bGrabbing = false;//是否采集
         #endregion
 
-        #region
+        #region Timer控件
 
+        /// <summary>
+        /// 主流程
+        /// </summary>
         int inTimer1 = 0;
         System.Timers.Timer timer1 = new System.Timers.Timer();
+
+        /// <summary>
+        /// 流程执行时间
+        /// </summary>
+        int inTimer2 = 0;
+        System.Timers.Timer timer2 = new System.Timers.Timer();
+
+        /// <summary>
+        /// 定时执行任务
+        /// </summary>
+        int inTimer3 = 0;
+        System.Timers.Timer timer3 = new System.Timers.Timer();
 
         private void Timer1Start()
         {
@@ -51,6 +67,25 @@ namespace MiniSpore
             timer1.Stop();
             Interlocked.Exchange(ref inTimer1, 0);
         }
+        private void Timer2Start()
+        {
+            timer2.Start();
+        }
+        private void Timer2Stop()
+        {
+            timer2.Stop();
+            Interlocked.Exchange(ref inTimer2, 0);
+        }
+
+        private void Timer3Start()
+        {
+            timer3.Start();
+        }
+        private void Timer3Stop()
+        {
+            timer3.Stop();
+            Interlocked.Exchange(ref inTimer3, 0);
+        }
 
         #endregion
 
@@ -58,17 +93,25 @@ namespace MiniSpore
         public Main()
         {
             InitializeComponent();
+#if DEBUG
+            this.WindowState = FormWindowState.Normal;
+#else
+            this.WindowState = FormWindowState.Maximized;
+#endif
+            //获取流程图标
+            imageProcess = (Image)resources.GetObject("pictureBox6_Image");
+            //开机自启
+            Tools.AutoStart(true);
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-            //获取流程图标
-            imageProcess = (Image)resources.GetObject("pictureBox6_Image");
+            //初始化
+            TimerInit();
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
             workThread.Start();
-
         }
 
         private void Init()
@@ -79,7 +122,6 @@ namespace MiniSpore
                 string currVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
                 lblVersion.Text = string.Format("当前版本：V_{0}", currVersion);
             }));
-
         }
 
         /// <summary>
@@ -87,8 +129,17 @@ namespace MiniSpore
         /// </summary>
         private void TimerInit()
         {
+            //主流程
             timer1.Elapsed += new ElapsedEventHandler(timer1_Elapsed);
-            timer1.Interval = 1000 ;
+            timer1.Interval = 1000;
+
+            //定时
+            timer2.Elapsed += new ElapsedEventHandler(timer2_Elapsed);
+            timer2.Interval = 1000;
+
+            //任务
+            timer3.Elapsed += new ElapsedEventHandler(timer3_Elapsed);
+            timer3.Interval = 1000;
 
         }
 
@@ -106,7 +157,68 @@ namespace MiniSpore
                 Interlocked.Exchange(ref inTimer1, 0);
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void timer2_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (Interlocked.Exchange(ref inTimer2, 1) == 0)
+            {
 
+
+                Interlocked.Exchange(ref inTimer2, 0);
+            }
+
+        }
+        /// <summary>
+        /// 定时执行任务
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void timer3_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (Interlocked.Exchange(ref inTimer3, 1) == 0)
+            {
+
+
+                Interlocked.Exchange(ref inTimer3, 0);
+            }
+        }
+
+        /// <summary>
+        /// 初始化
+        /// </summary>
+        private void Initialize()
+        {
+
+        }
+
+        /// <summary>
+        /// 收集孢子
+        /// </summary>
+        private void CollectSpore()
+        { 
+               
+        }
+
+        /// <summary>
+        /// 拍照
+        /// </summary>
+        private void TakePhotos()
+        { 
+        
+        
+        }
+
+        /// <summary>
+        /// 上传数据
+        /// </summary>
+        private void UploadData()
+        { 
+        
+        }
 
         /// <summary>
         /// 设置流程显示
@@ -182,7 +294,7 @@ namespace MiniSpore
             try
             {
                 cbDeviceList.Items.Clear();
-                m_ltDeviceList.Clear(); 
+                m_ltDeviceList.Clear();
                 int nRet = CSystem.EnumDevices(CSystem.MV_GIGE_DEVICE | CSystem.MV_USB_DEVICE, ref m_ltDeviceList);
                 if (0 != nRet)
                 {

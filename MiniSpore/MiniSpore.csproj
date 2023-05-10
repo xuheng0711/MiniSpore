@@ -60,6 +60,9 @@
     <Reference Include="Emgu.CV.World, Version=4.1.0.3420, Culture=neutral, PublicKeyToken=7281126722ab4438, processorArchitecture=MSIL">
       <HintPath>packages\EMGU.CV.4.1.0.3420\lib\net35\Emgu.CV.World.dll</HintPath>
     </Reference>
+    <Reference Include="M2Mqtt.Net, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\M2Mqtt.4.3.0.0\lib\net45\M2Mqtt.Net.dll</HintPath>
+    </Reference>
     <Reference Include="MvCamCtrl.Net, Version=4.0.0.4, Culture=neutral, PublicKeyToken=52fddfb3f94be800, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Debug\MvCamCtrl.Net.dll</HintPath>
@@ -83,6 +86,7 @@
     <Compile Include="Common\Base64Encoder.cs" />
     <Compile Include="Common\DebOutPut.cs" />
     <Compile Include="Common\HttpRequest.cs" />
+    <Compile Include="Common\MQTTClient.cs" />
     <Compile Include="Common\Param.cs" />
     <Compile Include="Common\PubField.cs" />
     <Compile Include="Common\Tools.cs" />
@@ -93,8 +97,17 @@
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
+    <Compile Include="Model\MQTTClientInfo.cs" />
+    <Compile Include="Model\MQTTMessage.cs" />
+    <Compile Include="Model\MQTTModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Setting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Setting.Designer.cs">
+      <DependentUpon>Setting.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
