@@ -8,12 +8,12 @@ namespace MiniSpore.Model
 {
     public class MQTTClientInfo
     {
-        public MQTTClient result { get; set; }
+        public ClientInfo result { get; set; }
         public int code { get; set; }
         public string msg { get; set; }
     }
 
-    public class MQTTClient
+    public class ClientInfo
     {
         public string clientId { get; set; }
         public string passwords { get; set; }

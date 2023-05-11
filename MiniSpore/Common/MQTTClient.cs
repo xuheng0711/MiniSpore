@@ -105,12 +105,12 @@ namespace MiniSpore.Common
         {
             try
             {
-                if (string.IsNullOrEmpty(Param.ServerIP) || string.IsNullOrEmpty(Param.ServerPort))
+                if (string.IsNullOrEmpty(Param.MQTTServerIP) || string.IsNullOrEmpty(Param.MQTTServerPort))
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未设置MQTT服务器地址或端口号信息");
                     return;
                 }
-                client = new MqttClient("1111", int.Parse("00"), false, MqttSslProtocols.TLSv1_2, null, null);
+                client = new MqttClient(Param.MQTTServerIP, int.Parse(Param.MQTTServerPort), false, MqttSslProtocols.TLSv1_2, null, null);
                 client.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;//接收消息
                 client.ConnectionClosed += Client_ConnectionClosed;//服务器主动断开重新连接
             }

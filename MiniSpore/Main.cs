@@ -33,6 +33,9 @@ namespace MiniSpore
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
         private Image imageProcess = null;
 
+        //MQTT服务器
+        public MQTTClient mqttClient = null;
+
         #region 相机对象
         private CCamera m_MyCamera = null;//相机对象
         ComboBox cbDeviceList = new ComboBox();//设备列表
@@ -102,23 +105,41 @@ namespace MiniSpore
 #endif
             //获取流程图标
             imageProcess = (Image)resources.GetObject("pictureBox6_Image");
+            //设置数据库地址
+            string dbPath = PubField.pathBase + "\\data.sqlite";
+            SQLiteHelper.SetConnectionString(dbPath);
             //开机自启
             Tools.AutoStart(true);
         }
 
         private void Main_Load(object sender, EventArgs e)
         {
-            string dbPath = PubField.pathBase + "\\data.sqlite";
-            SQLiteHelper.SetConnectionString(dbPath);//设置数据库地址
             //初始化
             TimerInit();
+
+            //初始化参数
+            Param.Init_Param(configfilePath);
+
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
             workThread.Start();
-            //初始化通讯方式
 
+            //初始化通讯方式
+            if (Param.CommunicateMode == "0")//Socket通讯方式
+            {
+                //Thread myThread = new Thread(new ThreadStart(SocketServerInit));
+                //myThread.IsBackground = true;
+                //myThread.Start();
+            }
+            else if (Param.CommunicateMode == "1")//MQTT通讯方式
+            {
+                Thread myThread = new Thread(new ThreadStart(MQTTServerInit));
+                myThread.IsBackground = true;
+                myThread.Start();
+            }
         }
+
 
         private void Init()
         {
@@ -149,6 +170,35 @@ namespace MiniSpore
 
         }
 
+        /// <summary>
+        /// 初始化MQTT服务器
+        /// </summary>
+        private void MQTTServerInit()
+        {
+            try
+            {
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "首次连接MQTT服务器！");
+
+                MQTTModel mQTTModel = new MQTTModel()
+                {
+                    Address = Param.MQTTServerIP,
+                    Port = Param.MQTTServerPort,
+                    ClientID = Param.MQTTClientID,
+                    Account = Param.MQTTAccount,
+                    Password = Param.MQTTPassword
+                };
+
+                mqttClient = new MQTTClient(this, mQTTModel);
+                mqttClient.BuildMqttClient();//实例化MQTT客户端
+                mqttClient.MqttConnect();//连接服务器
+                //mqttClient.SendWorkMode(Param.RunFlag);
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.DebLog(ex.ToString());
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
         ///// <summary>
         ///// 工作流程
         ///// </summary>
@@ -240,13 +290,13 @@ namespace MiniSpore
                 {
                     return;
                 }
-                Protocol Message = JsonConvert.DeserializeObject<Protocol>(jsonText);
-                if (Message == null || string.IsNullOrEmpty(Message.devId) || Message.devId != Param.DeviceID)
+                Protocol protocol = JsonConvert.DeserializeObject<Protocol>(jsonText);
+                if (protocol == null || string.IsNullOrEmpty(protocol.devId) || protocol.devId != Param.DeviceID)
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收到的数据不合法！数据：" + jsonText);
                     return;
                 }
-                func = Message.func;
+                func = protocol.func;
                 if (func == 100)
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "接收数据:" + jsonText);
@@ -255,13 +305,35 @@ namespace MiniSpore
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收数据:" + jsonText);
                 }
+                string message = "";
                 switch (func)
                 {
                     case 101:
+                        //采集数据（更新状态）
+
+                        break;
+                    case 200:
+                        //获取参数
+
+                        break;
+                    case 201:
+                        //设置参数
 
                         break;
                 }
 
+                if (Param.CommunicateMode == "0")
+                {
+                    //MQTT
+
+
+                }
+                else
+                {
+                    //Socket
+
+
+                }
             }
             catch (Exception ex)
             {
@@ -306,7 +378,6 @@ namespace MiniSpore
             txtSocketAddress.Enabled = bEnabled;
             txtSocketPort.Enabled = bEnabled;
         }
-
 
         /// <summary>
         /// 通讯方式

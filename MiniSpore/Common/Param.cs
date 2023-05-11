@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MiniSpore.Model;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,8 +16,10 @@ namespace MiniSpore.Common
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
         //通讯方式
         public static string CommunicateMode = "";//0:MQTT 1:Socket
-        public static string ServerIP = "";
-        public static string ServerPort = "";
+        public static string MQTTServerIP = "";
+        public static string MQTTServerPort = "";
+        public static string SocketServerIP = "";
+        public static string SocketServerPort = "";
 
         //定时运行采集时间
         public static string CollectHour = "";
@@ -47,6 +51,23 @@ namespace MiniSpore.Common
                 DeviceID = Read_ConfigParam(configfileName, "Config", "DeviceID");//设备编号
 
 
+                HttpRequest httpRequest = new HttpRequest();
+                string url = string.Format("http://nyzbwlw.com/situation/http/mqtt/getClientMqtt?eqCode={0}", DeviceID);
+                string strResponse = httpRequest.Get(url);
+                if (!string.IsNullOrEmpty(strResponse))
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("http接口获取MQTT账号信息：{0}", strResponse));
+                    MQTTClientInfo mqttClient = JsonConvert.DeserializeObject<MQTTClientInfo>(strResponse);
+                    MQTTClientID = mqttClient.result.clientId;
+                    MQTTAccount = mqttClient.result.userName;
+                    MQTTPassword = mqttClient.result.passwords;
+                }
+
+                OssEndPoint = Read_ConfigParam(configfileName, "AliyunOSS", "EndPoint");
+                OssAccessKeyId = Read_ConfigParam(configfileName, "AliyunOSS", "AccessKeyId");
+                OssAccessKeySecret = Read_ConfigParam(configfileName, "AliyunOSS", "AccessKeySecret");
+                OssBucketName = Read_ConfigParam(configfileName, "AliyunOSS", "BucketName");
+                OSS_Url = Read_ConfigParam(configfileName, "AliyunOSS", "OSS_Url");
             }
             catch (Exception ex)
             {
