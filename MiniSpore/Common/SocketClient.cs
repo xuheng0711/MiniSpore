@@ -90,14 +90,14 @@ namespace MiniSpore.Common
         {
             try
             {
-                Protocol protocol = new Protocol()
+                ProtocolModel model = new ProtocolModel()
                 {
                     message = "keep-alive",
                     devId = Param.DeviceID,
                     func = 100,
                     err = ""
                 };
-                SendMsg(JsonConvert.SerializeObject(protocol));
+                SendMsg(JsonConvert.SerializeObject(model));
             }
             catch (Exception ex)
             {

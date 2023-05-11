@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Resources;
 using System.Text;
 using System.Threading;
@@ -33,6 +34,8 @@ namespace MiniSpore
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
         private Image imageProcess = null;
 
+        //Socket服务器
+        public SocketClient socketClient = null;
         //MQTT服务器
         public MQTTClient mqttClient = null;
 
@@ -128,9 +131,9 @@ namespace MiniSpore
             //初始化通讯方式
             if (Param.CommunicateMode == "0")//Socket通讯方式
             {
-                //Thread myThread = new Thread(new ThreadStart(SocketServerInit));
-                //myThread.IsBackground = true;
-                //myThread.Start();
+                Thread myThread = new Thread(new ThreadStart(SocketServerInit));
+                myThread.IsBackground = true;
+                myThread.Start();
             }
             else if (Param.CommunicateMode == "1")//MQTT通讯方式
             {
@@ -170,6 +173,25 @@ namespace MiniSpore
 
         }
 
+        /// <summary>
+        /// 初始化Socket服务器
+        /// </summary>
+        private void SocketServerInit()
+        {
+            try
+            {
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "首次连接服务器！");
+                string serverIP = Param.SocketServerIP;
+                int serverPort = Convert.ToInt32(Param.SocketServerPort);
+                socketClient = new SocketClient(this, serverIP, serverPort);
+                socketClient.connectToSever();//连接服务器
+                //socketClient.SendWorkMode("", int.Parse(Param.RunFlag));
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
         /// <summary>
         /// 初始化MQTT服务器
         /// </summary>
@@ -290,7 +312,7 @@ namespace MiniSpore
                 {
                     return;
                 }
-                Protocol protocol = JsonConvert.DeserializeObject<Protocol>(jsonText);
+                ProtocolModel protocol = JsonConvert.DeserializeObject<ProtocolModel>(jsonText);
                 if (protocol == null || string.IsNullOrEmpty(protocol.devId) || protocol.devId != Param.DeviceID)
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收到的数据不合法！数据：" + jsonText);

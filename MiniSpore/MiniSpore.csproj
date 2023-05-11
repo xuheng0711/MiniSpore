@@ -108,7 +108,7 @@
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\MQTTClientInfo.cs" />
-    <Compile Include="Model\Protocol.cs" />
+    <Compile Include="Model\ProtocolModel.cs" />
     <Compile Include="Model\MQTTModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

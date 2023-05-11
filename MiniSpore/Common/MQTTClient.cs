@@ -83,7 +83,7 @@ namespace MiniSpore.Common
             {
                 if (client != null && client.IsConnected)
                 {
-                    Model.Protocol message = new Model.Protocol()
+                    Model.ProtocolModel message = new Model.ProtocolModel()
                     {
                         message = "keep-alive",
                         devId = Param.DeviceID,
@@ -143,7 +143,7 @@ namespace MiniSpore.Common
                     {
                         return;
                     }
-                    Model.Protocol modelMessage = JsonConvert.DeserializeObject<Model.Protocol>(strReceiveMessage);
+                    Model.ProtocolModel modelMessage = JsonConvert.DeserializeObject<Model.ProtocolModel>(strReceiveMessage);
                     if (modelMessage.devId != Param.DeviceID)
                     {
                         return;

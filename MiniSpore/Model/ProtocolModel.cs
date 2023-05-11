@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MiniSpore.Model
 {
-    public class Protocol
+    public class ProtocolModel
     {
         /// <summary>
         /// 功能码
