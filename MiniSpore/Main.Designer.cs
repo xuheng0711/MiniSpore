@@ -34,6 +34,7 @@ namespace MiniSpore
             this.gbParameter = new System.Windows.Forms.GroupBox();
             this.btnApply = new System.Windows.Forms.Button();
             this.btnModify = new System.Windows.Forms.Button();
+            this.cbCommunicateMode = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -71,8 +72,7 @@ namespace MiniSpore
             this.lblTitle = new System.Windows.Forms.Label();
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.pbMin = new System.Windows.Forms.PictureBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.cbCommunicateMode = new System.Windows.Forms.ComboBox();
+            this.pbLogo = new System.Windows.Forms.PictureBox();
             this.panelMain.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.gbParameter.SuspendLayout();
@@ -93,7 +93,7 @@ namespace MiniSpore
             ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.SuspendLayout();
             // 
             // panelMain
@@ -164,6 +164,19 @@ namespace MiniSpore
             this.btnModify.Text = "修改";
             this.btnModify.UseVisualStyleBackColor = false;
             this.btnModify.Click += new System.EventHandler(this.btnModify_Click);
+            // 
+            // cbCommunicateMode
+            // 
+            this.cbCommunicateMode.Font = new System.Drawing.Font("宋体", 13.5F);
+            this.cbCommunicateMode.FormattingEnabled = true;
+            this.cbCommunicateMode.Items.AddRange(new object[] {
+            "MQTT",
+            "Socket"});
+            this.cbCommunicateMode.Location = new System.Drawing.Point(422, 25);
+            this.cbCommunicateMode.Name = "cbCommunicateMode";
+            this.cbCommunicateMode.Size = new System.Drawing.Size(123, 26);
+            this.cbCommunicateMode.TabIndex = 113;
+            this.cbCommunicateMode.SelectedIndexChanged += new System.EventHandler(this.cbCommunicateMode_SelectedIndexChanged);
             // 
             // label5
             // 
@@ -521,7 +534,7 @@ namespace MiniSpore
             this.panelTitle.Controls.Add(this.lblTitle);
             this.panelTitle.Controls.Add(this.pbClose);
             this.panelTitle.Controls.Add(this.pbMin);
-            this.panelTitle.Controls.Add(this.pictureBox1);
+            this.panelTitle.Controls.Add(this.pbLogo);
             this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelTitle.Location = new System.Drawing.Point(0, 0);
             this.panelTitle.Name = "panelTitle";
@@ -575,27 +588,14 @@ namespace MiniSpore
             this.pbMin.TabStop = false;
             this.pbMin.Click += new System.EventHandler(this.pbMin_Click);
             // 
-            // pictureBox1
+            // pbLogo
             // 
-            this.pictureBox1.Image = global::MiniSpore.Properties.Resources.pictureBox1_Image;
-            this.pictureBox1.Location = new System.Drawing.Point(9, 7);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(61, 65);
-            this.pictureBox1.TabIndex = 1;
-            this.pictureBox1.TabStop = false;
-            // 
-            // cbCommunicateMode
-            // 
-            this.cbCommunicateMode.Font = new System.Drawing.Font("宋体", 13.5F);
-            this.cbCommunicateMode.FormattingEnabled = true;
-            this.cbCommunicateMode.Items.AddRange(new object[] {
-            "MQTT",
-            "Socket"});
-            this.cbCommunicateMode.Location = new System.Drawing.Point(422, 25);
-            this.cbCommunicateMode.Name = "cbCommunicateMode";
-            this.cbCommunicateMode.Size = new System.Drawing.Size(123, 26);
-            this.cbCommunicateMode.TabIndex = 113;
-            this.cbCommunicateMode.SelectedIndexChanged += new System.EventHandler(this.cbCommunicateMode_SelectedIndexChanged);
+            this.pbLogo.Image = global::MiniSpore.Properties.Resources.pictureBox1_Image;
+            this.pbLogo.Location = new System.Drawing.Point(7, 5);
+            this.pbLogo.Name = "pbLogo";
+            this.pbLogo.Size = new System.Drawing.Size(61, 65);
+            this.pbLogo.TabIndex = 1;
+            this.pbLogo.TabStop = false;
             // 
             // Main
             // 
@@ -637,7 +637,7 @@ namespace MiniSpore
             ((System.ComponentModel.ISupportInitialize)(this.pbSetting)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -648,7 +648,7 @@ namespace MiniSpore
         private System.Windows.Forms.Panel panelTitle;
         private System.Windows.Forms.Panel panelBottom;
         private System.Windows.Forms.Panel panelContent;
-        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.PictureBox pbLogo;
         private System.Windows.Forms.PictureBox pbMin;
         private System.Windows.Forms.PictureBox pbClose;
         private System.Windows.Forms.GroupBox gbParameter;

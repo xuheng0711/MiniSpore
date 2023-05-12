@@ -169,7 +169,7 @@ namespace MiniSpore
 
             //任务
             timer3.Elapsed += new ElapsedEventHandler(timer3_Elapsed);
-            timer3.Interval = 1000;
+            timer3.Interval = 5 * 1000;
 
         }
 
@@ -711,7 +711,12 @@ namespace MiniSpore
         /// <param name="e"></param>
         private void pbSetting_Click(object sender, EventArgs e)
         {
+            Setting setting = new Setting();
+            DialogResult dialogResult = setting.ShowDialog();
+            if (dialogResult == DialogResult.Yes)
+            {
 
+            }
         }
 
 
