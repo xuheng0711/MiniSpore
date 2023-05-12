@@ -30,10 +30,11 @@ namespace MiniSpore
         //位置标记
         private int step = -1;
         ////配置文件地址
-        private string configfilePath = PubField.pathBase + "\\Config.ini";
+        internal static string configfileName = "Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
         private Image imageProcess = null;
-
+        //程序锁
+        private static readonly Object locker = new object();
         //Socket服务器
         public SocketClient socketClient = null;
         //MQTT服务器
@@ -119,10 +120,8 @@ namespace MiniSpore
         {
             //初始化
             TimerInit();
-
             //初始化参数
-            Param.Init_Param(configfilePath);
-
+            Param.Init_Param(configfileName);
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
@@ -149,6 +148,14 @@ namespace MiniSpore
             this.Invoke(new EventHandler(delegate
             {
                 setControlAvailable(false);
+                txtDeviceCode.Text = Param.DeviceID;
+                int nCommunicateMode = -1;
+                int.TryParse(Param.CommunicateMode, out nCommunicateMode);
+                cbCommunicateMode.SelectedIndex = nCommunicateMode;
+                txtMQTTAddress.Text = Param.MQTTServerIP;
+                txtMQTTPort.Text = Param.MQTTServerPort;
+                txtSocketAddress.Text = Param.SocketServerIP;
+                txtSocketPort.Text = Param.SocketServerPort;
                 string currVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
                 lblVersion.Text = string.Format("当前版本：V_{0}", currVersion);
             }));
@@ -432,6 +439,32 @@ namespace MiniSpore
         private void btnApply_Click(object sender, EventArgs e)
         {
             setControlAvailable(false);
+            string strDeviceID = txtDeviceCode.Text;
+            int nCommunicateMode = cbCommunicateMode.SelectedIndex;
+            string strMQTTAddress = txtMQTTAddress.Text;
+            string strMQTTPort = txtMQTTPort.Text;
+            string strSocketAddress = txtSocketAddress.Text;
+            string strSocketPort = txtSocketPort.Text;
+
+            if (strDeviceID != Param.DeviceID || nCommunicateMode != int.Parse(Param.CommunicateMode) || strMQTTAddress != Param.MQTTServerIP || strMQTTPort != Param.MQTTServerPort || strSocketAddress != Param.SocketServerIP || strSocketPort != Param.SocketServerPort)
+            {
+                Param.Set_ConfigParm(Main.configfileName, "Config", "DeviceID", strDeviceID);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "CommunicateMode", nCommunicateMode.ToString());
+                Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerIP", strMQTTAddress);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerPort", strMQTTPort);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerIP", strSocketAddress);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerPort", strSocketPort);
+                DialogResult dialogResult = MessageBox.Show("检测到您更改了系统关键性配置，将在系统重启之后生效。点击“确定”将立即重启本程序，点击“取消”请稍后手动重启！", "提示", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
+                if (dialogResult == DialogResult.OK)
+                {
+                    Tools.RestStart();
+                }
+            }
+            else
+            {
+                MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
         }
 
         #region 相机方法
@@ -670,6 +703,28 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 显示信息
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="error"></param>
+        private void showMessage(string message, bool error = false)
+        {
+            lock (locker)
+            {
+                this.Invoke(new EventHandler(delegate
+                {
+                    if (error)
+                    {
+                        lblError.Text = message;
+                    }
+                    else
+                    {
+                        lblMessage.Text = message;
+                    }
+                }));
+            }
+        }
 
         /// <summary>
         /// 最小化

@@ -15,6 +15,7 @@ namespace MiniSpore.Common
         public static string DeviceID = "";
         public static string SerialPort = "";
         public static string Baudrate = "";
+        public static string WorkMode = "";//0:自动 1:定时
         public static string CollectTime = "";
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
         //通讯方式
@@ -67,16 +68,19 @@ namespace MiniSpore.Common
                 CollectMinute = Read_ConfigParam(configfileName, "Config", "CollectMinute");
                 isWinRestart = Read_ConfigParam(configfileName, "Config", "isWinRestart");
 
-                HttpRequest httpRequest = new HttpRequest();
-                string url = string.Format("http://nyzbwlw.com/situation/http/mqtt/getClientMqtt?eqCode={0}", DeviceID);
-                string strResponse = httpRequest.Get(url);
-                if (!string.IsNullOrEmpty(strResponse))
+                if (CommunicateMode == "0")
                 {
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("http接口获取MQTT账号信息：{0}", strResponse));
-                    MQTTClientInfo mqttClient = JsonConvert.DeserializeObject<MQTTClientInfo>(strResponse);
-                    MQTTClientID = mqttClient.result.clientId;
-                    MQTTAccount = mqttClient.result.userName;
-                    MQTTPassword = mqttClient.result.passwords;
+                    HttpRequest httpRequest = new HttpRequest();
+                    string url = string.Format("http://nyzbwlw.com/situation/http/mqtt/getClientMqtt?eqCode={0}", DeviceID);
+                    string strResponse = httpRequest.Get(url);
+                    if (!string.IsNullOrEmpty(strResponse))
+                    {
+                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("http接口获取MQTT账号信息：{0}", strResponse));
+                        MQTTClientInfo mqttClient = JsonConvert.DeserializeObject<MQTTClientInfo>(strResponse);
+                        MQTTClientID = mqttClient.result.clientId;
+                        MQTTAccount = mqttClient.result.userName;
+                        MQTTPassword = mqttClient.result.passwords;
+                    }
                 }
 
                 OssEndPoint = Read_ConfigParam(configfileName, "AliyunOSS", "EndPoint");
