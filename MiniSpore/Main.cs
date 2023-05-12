@@ -156,6 +156,7 @@ namespace MiniSpore
                 txtMQTTPort.Text = Param.MQTTServerPort;
                 txtSocketAddress.Text = Param.SocketServerIP;
                 txtSocketPort.Text = Param.SocketServerPort;
+                lblWorkMode.Text = string.Format("当前运行模式_{0}", Param.WorkMode == "0" ? "自动" : "定时");
                 string currVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
                 lblVersion.Text = string.Format("当前版本：V_{0}", currVersion);
             }));

@@ -57,6 +57,7 @@ namespace MiniSpore.Common
                 Baudrate = Read_ConfigParam(configfileName, "Config", "Baudrate");
                 CollectTime = Read_ConfigParam(configfileName, "Config", "CollectTime");//采集时长
                 CommunicateMode = Read_ConfigParam(configfileName, "Config", "CommunicateMode");
+                WorkMode = Read_ConfigParam(configfileName, "Config", "WorkMode");//运行模式
                 //MQTT协议
                 MQTTServerIP = Read_ConfigParam(configfileName, "Config", "MQTTServerIP");
                 MQTTServerPort = Read_ConfigParam(configfileName, "Config", "MQTTServerPort");

@@ -34,7 +34,9 @@ namespace MiniSpore
         {
             cbPort.SelectedItem = Param.SerialPort;
             cbBaudrate.SelectedItem = Param.Baudrate;
-            cbWorkMode.SelectedIndex = int.Parse(Param.WorkMode);
+            int nWorkMode = -1;
+            int.TryParse(Param.WorkMode,out nWorkMode);
+            cbWorkMode.SelectedIndex = nWorkMode;
             tbCollectTime.Text = Param.CollectMinute;
             tbCollectHour.Text = Param.CollectHour;
             tbCollectMinute.Text = Param.CollectMinute;

@@ -503,9 +503,8 @@ namespace MiniSpore
             this.lblWorkMode.Font = new System.Drawing.Font("宋体", 13.5F);
             this.lblWorkMode.Location = new System.Drawing.Point(27, 30);
             this.lblWorkMode.Name = "lblWorkMode";
-            this.lblWorkMode.Size = new System.Drawing.Size(26, 18);
+            this.lblWorkMode.Size = new System.Drawing.Size(0, 18);
             this.lblWorkMode.TabIndex = 0;
-            this.lblWorkMode.Text = "00";
             // 
             // panelBottom
             // 
