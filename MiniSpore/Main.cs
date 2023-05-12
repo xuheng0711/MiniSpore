@@ -130,13 +130,13 @@ namespace MiniSpore
             //初始化通讯方式
             if (Param.CommunicateMode == "0")//Socket通讯方式
             {
-                Thread myThread = new Thread(new ThreadStart(SocketServerInit));
+                Thread myThread = new Thread(new ThreadStart(MQTTServerInit));
                 myThread.IsBackground = true;
                 myThread.Start();
             }
             else if (Param.CommunicateMode == "1")//MQTT通讯方式
             {
-                Thread myThread = new Thread(new ThreadStart(MQTTServerInit));
+                Thread myThread = new Thread(new ThreadStart(SocketServerInit));
                 myThread.IsBackground = true;
                 myThread.Start();
             }
