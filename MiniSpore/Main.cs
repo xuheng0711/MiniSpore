@@ -269,6 +269,8 @@ namespace MiniSpore
                         //流程结束-更新执行指令
                         TaskComplete(); break;
                 }
+                //当前流程
+                setProcess();
                 //当前位置
                 SendCurrAction();
                 Timer1Stop();
@@ -640,7 +642,7 @@ namespace MiniSpore
                     case 200:
                         //当前位置
                         break;
-                    case 300:                       
+                    case 300:
                         break;
                     case 301:
                         //读取参数
@@ -663,7 +665,7 @@ namespace MiniSpore
                             Param.CollectTime = settingInfo.CollectTime;
                             Param.WorkHour = settingInfo.WorkHour;
                             Param.WorkMinute = settingInfo.WorkMinute;
-                            SendCommonMsg(302,"");
+                            SendCommonMsg(302, "");
                         }
                         break;
                 }
@@ -686,7 +688,7 @@ namespace MiniSpore
         /// 设置流程显示
         /// </summary>
         /// <param name="pictureBox"></param>
-        private void setProcess(PictureBox pictureBox)
+        private void setProcess()
         {
             foreach (Control control in gbProcess.Controls)
             {
@@ -696,7 +698,14 @@ namespace MiniSpore
                     picture.Image = null;
                 }
             }
-            pictureBox.Image = imageProcess;
+
+            switch (step)
+            {
+                case 0: pb1.Image = imageProcess; break;
+                case 1: pb2.Image = imageProcess; break;
+                case 2: pb3.Image = imageProcess; break;
+                case 3: pb4.Image = imageProcess; break;
+            }
         }
 
         /// <summary>
