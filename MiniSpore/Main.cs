@@ -52,6 +52,10 @@ namespace MiniSpore
 
         //传输图像是否完成
         private bool isTransferImage = false;
+        /// <summary>
+        /// 流程执行时间
+        /// </summary>
+        private DateTime executeTime;
 
         #region Timer控件
 
@@ -72,6 +76,13 @@ namespace MiniSpore
         /// </summary>
         int inTimer3 = 0;
         System.Timers.Timer timer3 = new System.Timers.Timer();
+
+        /// <summary>
+        /// 定时执行程序
+        /// </summary>
+        int inTimer4 = 0;
+        System.Timers.Timer timer4 = new System.Timers.Timer();
+
 
         private void Timer1Start()
         {
@@ -100,6 +111,16 @@ namespace MiniSpore
         {
             timer3.Stop();
             Interlocked.Exchange(ref inTimer3, 0);
+        }
+
+        private void Timer4Start()
+        {
+            timer4.Start();
+        }
+        private void Timer4Stop()
+        {
+            timer4.Stop();
+            Interlocked.Exchange(ref inTimer4, 0);
         }
 
         #endregion
@@ -150,6 +171,7 @@ namespace MiniSpore
             }
             //执行定时任务
             Timer3Start();
+            Timer4Start();
         }
 
 
@@ -187,8 +209,11 @@ namespace MiniSpore
 
             //任务
             timer3.Elapsed += new ElapsedEventHandler(timer3_Elapsed);
-            timer3.Interval = 5 * 1000;
+            timer3.Interval = 1000;
 
+            //定时运行程序
+            timer4.Elapsed += new ElapsedEventHandler(timer4_Elapsed);
+            timer4.Interval = 5 * 1000;
         }
 
         /// <summary>
@@ -251,6 +276,7 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
+                Timer1Stop();
                 switch (step)
                 {
                     case 0:
@@ -267,13 +293,14 @@ namespace MiniSpore
                         UploadData(); break;
                     case 4:
                         //流程结束-更新执行指令
-                        TaskComplete(); break;
+                        TaskComplete();
+                        Timer3Start();
+                        break;
                 }
                 //当前流程
                 setProcess();
                 //当前位置
                 SendCurrAction();
-                Timer1Stop();
                 Interlocked.Exchange(ref inTimer1, 0);
             }
         }
@@ -286,6 +313,9 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer2, 1) == 0)
             {
+
+
+
 
 
                 Interlocked.Exchange(ref inTimer2, 0);
@@ -307,6 +337,7 @@ namespace MiniSpore
                     //自动
                     step = 0;
                     Timer1Start();
+                    Timer3Stop();
                 }
                 else if (Param.WorkMode == "1")
                 {
@@ -333,6 +364,7 @@ namespace MiniSpore
                                 //强制执行
                                 lblWorkMode.Text = "当前运行模式_强制运行";
                                 Timer1Start();
+                                Timer3Stop();
                             }
                         }
                     }
@@ -354,6 +386,7 @@ namespace MiniSpore
                             taskParams[2].Value = currTime.Minute;
                             SQLiteHelper.ExecuteNonQuery(sql, taskParams);
                             Timer1Start();
+                            Timer3Stop();
                         }
                     }
 
@@ -363,10 +396,66 @@ namespace MiniSpore
         }
 
         /// <summary>
+        /// 定时运行程序
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void timer4_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (Interlocked.Exchange(ref inTimer4, 1) == 0)
+            {
+                string currTime = DateTime.Now.ToString("HH:mm");
+
+                //定时关机
+                if (Param.isWinRestart == "1")
+                {
+                    //定时重启
+                    if (currTime == "00:00")
+                    {
+                        Tools.WinRestart();
+                    }
+                }
+                //定时上传数据
+                if (currTime == "05:00" || currTime == "15:00" || currTime == "23:00")
+                {
+                    UploadData(false);
+                }
+                //相机搜索
+
+                if (m_MyCamera == null || !m_MyCamera.IsDeviceConnected())
+                {
+                    if (!SearchDev())
+                    {
+                        errorMessage = "未搜索到相机";
+                    }
+                    else
+                    {
+                        if (!OpenDev())
+                        {
+                            errorMessage = "打开相机失败";
+                        }
+                        else
+                        {
+                            errorMessage = "";
+                        }
+                    }
+                }
+
+                this.Invoke(new EventHandler(delegate
+                {
+                    lblError.Text = errorMessage;
+                }));
+
+                Interlocked.Exchange(ref inTimer4, 0);
+            }
+        }
+        /// <summary>
         /// 初始化
         /// </summary>
         private void Initialize()
         {
+            executeTime = DateTime.Now;
+
             //关闭补光灯
 
             //关闭吸风
@@ -375,6 +464,8 @@ namespace MiniSpore
 
             //拉出载玻带
 
+            step = 1;
+            Timer2Start();
         }
 
         /// <summary>
@@ -402,7 +493,7 @@ namespace MiniSpore
         /// <summary>
         /// 上传数据
         /// </summary>
-        private void UploadData()
+        private void UploadData(bool isProcess = true)
         {
             string sql = "select * from Record where Flag=0 ";
             DataTable dataTable = SQLiteHelper.ExecuteQuery(sql, null);
@@ -432,6 +523,11 @@ namespace MiniSpore
                     break;
                 }
             }
+            if (isProcess)
+            {
+                step = 4;
+                Timer1Start();
+            }
 
         }
 
@@ -448,6 +544,7 @@ namespace MiniSpore
             };
             parameters[0].Value = currTime.ToString("yyyy-MM-dd");
             SQLiteHelper.ExecuteNonQuery(sql, parameters);
+
         }
 
         /// <summary>
@@ -782,6 +879,9 @@ namespace MiniSpore
         }
 
         #region 相机方法
+
+
+
         /// <summary>
         /// 搜索设备
         /// </summary>
@@ -1059,6 +1159,7 @@ namespace MiniSpore
             Timer1Stop();
             Timer2Stop();
             Timer3Stop();
+            Timer4Stop();
             if (Param.CommunicateMode == "0")
             {
                 mqttClient.CloseMQTT();
