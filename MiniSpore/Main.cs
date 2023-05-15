@@ -23,9 +23,10 @@ using System.Windows.Forms;
 
 namespace MiniSpore
 {
+    public delegate void PushSettingMessage();
     public partial class Main : Form
     {
-
+        public static PushSettingMessage pushSettingMessage;
         private string errorMessage = "";
         //位置标记
         private int step = -1;
@@ -114,6 +115,8 @@ namespace MiniSpore
             SQLiteHelper.SetConnectionString(dbPath);
             //开机自启
             Tools.AutoStart(true);
+            pushSettingMessage = SendSettingMsg;
+
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -128,13 +131,13 @@ namespace MiniSpore
             workThread.Start();
 
             //初始化通讯方式
-            if (Param.CommunicateMode == "0")//Socket通讯方式
+            if (Param.CommunicateMode == "0")//MQTT通讯方式
             {
                 Thread myThread = new Thread(new ThreadStart(MQTTServerInit));
                 myThread.IsBackground = true;
                 myThread.Start();
             }
-            else if (Param.CommunicateMode == "1")//MQTT通讯方式
+            else if (Param.CommunicateMode == "1")//Socket通讯方式
             {
                 Thread myThread = new Thread(new ThreadStart(SocketServerInit));
                 myThread.IsBackground = true;
@@ -193,7 +196,8 @@ namespace MiniSpore
                 int serverPort = Convert.ToInt32(Param.SocketServerPort);
                 socketClient = new SocketClient(this, serverIP, serverPort);
                 socketClient.connectToSever();//连接服务器
-                //socketClient.SendWorkMode("", int.Parse(Param.RunFlag));
+                //设置信息
+                SendSettingMsg();
             }
             catch (Exception ex)
             {
@@ -221,7 +225,8 @@ namespace MiniSpore
                 mqttClient = new MQTTClient(this, mQTTModel);
                 mqttClient.BuildMqttClient();//实例化MQTT客户端
                 mqttClient.MqttConnect();//连接服务器
-                //mqttClient.SendWorkMode(Param.RunFlag);
+                //设置信息
+                SendSettingMsg();
             }
             catch (Exception ex)
             {
@@ -229,6 +234,41 @@ namespace MiniSpore
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
             }
         }
+
+        /// <summary>
+        /// 获取设置信息
+        /// </summary>
+        /// <returns></returns>
+        private void SendSettingMsg()
+        {
+            SettingInfo setting = new SettingInfo()
+            {
+                WorkMode = Param.WorkMode,
+                CollectTime = Param.CollectTime,
+                WorkHour = Param.WorkHour,
+                WorkMinute = Param.WorkMinute
+            };
+
+            ProtocolModel model = new ProtocolModel()
+            {
+                func = 200,
+                devId = Param.DeviceID,
+                err = "",
+                message = setting
+            };
+
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+
+        }
+
         ///// <summary>
         ///// 工作流程
         ///// </summary>

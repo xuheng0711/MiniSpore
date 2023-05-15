@@ -37,9 +37,9 @@ namespace MiniSpore
             int nWorkMode = -1;
             int.TryParse(Param.WorkMode,out nWorkMode);
             cbWorkMode.SelectedIndex = nWorkMode;
-            tbCollectTime.Text = Param.CollectMinute;
-            tbCollectHour.Text = Param.CollectHour;
-            tbCollectMinute.Text = Param.CollectMinute;
+            tbCollectTime.Text = Param.CollectTime;
+            tbCollectHour.Text = Param.WorkHour;
+            tbCollectMinute.Text = Param.WorkMinute;
         }
 
         /// <summary>
@@ -81,9 +81,10 @@ namespace MiniSpore
             }
             else
             {
-                Param.CollectMinute = strCollectTime;
-                Param.CollectHour = strCollectHour;
-                Param.CollectMinute = strCollectMinute;
+                Param.CollectTime = strCollectTime;
+                Param.WorkHour = strCollectHour;
+                Param.WorkMinute = strCollectMinute;
+                Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }

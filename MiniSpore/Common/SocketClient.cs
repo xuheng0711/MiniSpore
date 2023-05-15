@@ -153,7 +153,7 @@ namespace MiniSpore.Common
                     if (n != sendBytes.Length)
                     {
                         if (func == "100")
-                            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送失败:" + cmd);
+                            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "Socket事件_发送失败:" + cmd);
                         else
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送失败:" + cmd);
                         DebOutPut.DebLog("Socket事件_发送失败:" + cmd);
@@ -162,7 +162,7 @@ namespace MiniSpore.Common
                     else
                     {
                         if (func == "100")
-                            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送成功:" + cmd);
+                            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "Socket事件_发送成功:" + cmd);
                         else
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送成功:" + cmd);
                         DebOutPut.DebLog("Socket事件_发送成功:" + cmd);

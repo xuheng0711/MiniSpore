@@ -16,7 +16,7 @@ namespace MiniSpore.Common
         public static string SerialPort = "";
         public static string Baudrate = "";
         public static string WorkMode = "";//0:自动 1:定时
-        public static string CollectTime = "";
+        public static string CollectTime = "";//采集时间
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
         //通讯方式
         public static string CommunicateMode = "";//0:MQTT 1:Socket
@@ -26,8 +26,8 @@ namespace MiniSpore.Common
         public static string SocketServerPort = "";
 
         //定时运行采集时间
-        public static string CollectHour = "";
-        public static string CollectMinute = "";
+        public static string WorkHour = "";
+        public static string WorkMinute = "";
         public static string isWinRestart = "";//每天电脑是否自动重启  0否  1是
         
         #region MQTT服务器
@@ -65,8 +65,8 @@ namespace MiniSpore.Common
                 SocketServerIP = Read_ConfigParam(configfileName, "Config", "SocketServerIP");
                 SocketServerPort = Read_ConfigParam(configfileName, "Config", "SocketServerPort");
                 //定时时间
-                CollectHour = Read_ConfigParam(configfileName, "Config", "CollectHour");
-                CollectMinute = Read_ConfigParam(configfileName, "Config", "CollectMinute");
+                WorkHour = Read_ConfigParam(configfileName, "Config", "WorkHour");
+                WorkMinute = Read_ConfigParam(configfileName, "Config", "WorkMinute");
                 isWinRestart = Read_ConfigParam(configfileName, "Config", "isWinRestart");
 
                 if (CommunicateMode == "0")

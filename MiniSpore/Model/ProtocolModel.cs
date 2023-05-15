@@ -32,4 +32,13 @@ namespace MiniSpore.Model
         public string picUrl { get; set; }
     }
 
+    public class SettingInfo
+    {
+        public string WorkMode { get; set; }
+        public string CollectTime { get; set; }
+        public string WorkHour { get; set; }
+        public string WorkMinute { get; set; }
+    }
+
+
 }
