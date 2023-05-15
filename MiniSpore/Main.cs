@@ -448,6 +448,29 @@ namespace MiniSpore
             SQLiteHelper.ExecuteNonQuery(sql, parameters);
         }
 
+        /// <summary>
+        /// 发送通用成功信息
+        /// </summary>
+        /// <param name="func"></param>
+        private void SendCommonMsg(int funCode, string message)
+        {
+            ProtocolModel model = new ProtocolModel()
+            {
+                func = funCode,
+                devId = Param.DeviceID,
+                err = "",
+                message = ""
+            };
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+        }
 
         /// <summary>
         /// 发送当前动作
@@ -527,7 +550,7 @@ namespace MiniSpore
                 {
                     return false;
                 }
-               
+
                 ProtocolModel model = new ProtocolModel();
                 model.devId = Param.DeviceID;
                 model.func = 101;
@@ -601,7 +624,6 @@ namespace MiniSpore
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "接收数据:" + jsonText);
                 }
-                string message = "";
                 switch (func)
                 {
                     case 101:
@@ -616,29 +638,36 @@ namespace MiniSpore
                         isTransferImage = true;
                         break;
                     case 200:
-                        //获取参数
-
-
-
+                        //当前位置
                         break;
-                    case 201:
+                    case 300:                       
+                        break;
+                    case 301:
+                        //读取参数
+                        SendSettingMsg();
+                        break;
+                    case 302:
                         //设置参数
-
+                        if (!string.IsNullOrEmpty(protocol.message + ""))
+                        {
+                            SettingInfo settingInfo = JsonConvert.DeserializeObject<SettingInfo>(protocol.message + "");
+                            Param.Set_ConfigParm(configfileName, "Config", "WorkMode", settingInfo.WorkMode);
+                            Param.Set_ConfigParm(configfileName, "Config", "CollectTime", settingInfo.CollectTime);
+                            Param.Set_ConfigParm(configfileName, "Config", "WorkHour", settingInfo.WorkHour);
+                            Param.Set_ConfigParm(configfileName, "Config", "WorkMinute", settingInfo.WorkMinute);
+                            if (settingInfo.WorkMode != Param.WorkMode)
+                            {
+                                Tools.RestStart();
+                            }
+                            Param.WorkMode = settingInfo.WorkMode;
+                            Param.CollectTime = settingInfo.CollectTime;
+                            Param.WorkHour = settingInfo.WorkHour;
+                            Param.WorkMinute = settingInfo.WorkMinute;
+                            SendCommonMsg(302,"");
+                        }
                         break;
                 }
 
-                if (Param.CommunicateMode == "0")
-                {
-                    //MQTT
-
-
-                }
-                else
-                {
-                    //Socket
-
-
-                }
             }
             catch (Exception ex)
             {
@@ -724,12 +753,12 @@ namespace MiniSpore
 
             if (strDeviceID != Param.DeviceID || nCommunicateMode != int.Parse(Param.CommunicateMode) || strMQTTAddress != Param.MQTTServerIP || strMQTTPort != Param.MQTTServerPort || strSocketAddress != Param.SocketServerIP || strSocketPort != Param.SocketServerPort)
             {
-                Param.Set_ConfigParm(Main.configfileName, "Config", "DeviceID", strDeviceID);
-                Param.Set_ConfigParm(Main.configfileName, "Config", "CommunicateMode", nCommunicateMode.ToString());
-                Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerIP", strMQTTAddress);
-                Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerPort", strMQTTPort);
-                Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerIP", strSocketAddress);
-                Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerPort", strSocketPort);
+                Param.Set_ConfigParm(configfileName, "Config", "DeviceID", strDeviceID);
+                Param.Set_ConfigParm(configfileName, "Config", "CommunicateMode", nCommunicateMode.ToString());
+                Param.Set_ConfigParm(configfileName, "Config", "MQTTServerIP", strMQTTAddress);
+                Param.Set_ConfigParm(configfileName, "Config", "MQTTServerPort", strMQTTPort);
+                Param.Set_ConfigParm(configfileName, "Config", "SocketServerIP", strSocketAddress);
+                Param.Set_ConfigParm(configfileName, "Config", "SocketServerPort", strSocketPort);
                 DialogResult dialogResult = MessageBox.Show("检测到您更改了系统关键性配置，将在系统重启之后生效。点击“确定”将立即重启本程序，点击“取消”请稍后手动重启！", "提示", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
                 if (dialogResult == DialogResult.OK)
                 {
