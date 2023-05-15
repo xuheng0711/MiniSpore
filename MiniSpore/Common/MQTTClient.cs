@@ -280,76 +280,6 @@ namespace MiniSpore.Common
         }
 
 
-        #region 发送信息方法
-
-        /// <summary>
-        /// 发送图像信息
-        /// </summary>
-        /// <param name="time"></param>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        //public bool SendPicMsg(string time, string path)
-        //{
-        //    try
-        //    {
-        //        string picAliOssUrl = uploadImageAliOSS(path);
-        //        if (string.IsNullOrEmpty(picAliOssUrl))
-        //        {
-        //            return false;
-        //        }
-        //        string strDeviceID = Param.DeviceID;
-
-        //        InfoPicMsg infopic = new InfoPicMsg();
-        //        infopic.devId = strDeviceID;
-        //        infopic.devtype = 2;
-        //        infopic.func = 101;
-        //        infopic.err = "";
-        //        picMsg pic = new picMsg();
-        //        pic.collectTime = time;
-        //        pic.picStr = picAliOssUrl;//阿里云Oss图像地址
-        //        infopic.message = pic;
-        //        publishMessage(infopic.ObjectToJson());
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        DebOutPut.DebLog(ex.ToString());
-        //        DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-        //        return false;
-        //    }
-
-        //}
-
-        /// <summary>
-        /// 上传图片至阿里云OSS服务器
-        /// </summary>
-        /// <param name="picPath"></param>
-        /// <returns></returns>
-        private string uploadImageAliOSS(string picPath)
-        {
-            string picAliOssUrl = "";
-            string fileName = System.IO.Path.GetFileName(picPath);
-            //填写Object完整路径，完整路径中不能包含Bucket名称
-            var objectName = string.Format("minispore/{0}", fileName);
-            // 创建OssClient实例。
-
-            if (!string.IsNullOrEmpty(Param.OssEndPoint) && !string.IsNullOrEmpty(Param.OssAccessKeyId) && !string.IsNullOrEmpty(Param.OssAccessKeySecret) && !string.IsNullOrEmpty(Param.OssBucketName) && !string.IsNullOrEmpty(Param.OSS_Url))
-            {
-                var client = new OssClient(Param.OssEndPoint, Param.OssAccessKeyId, Param.OssAccessKeySecret);
-                client.PutObject(Param.OssBucketName, objectName, picPath);
-
-                picAliOssUrl = Param.OSS_Url + objectName;
-            }
-            else
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "阿里云OSS配置信息不完整");
-            }
-            return picAliOssUrl;
-        }
-
-
-        #endregion
-
         /// <summary>
         /// 发布消息
         /// </summary>
@@ -366,7 +296,6 @@ namespace MiniSpore.Common
                 }
             }
         }
-
 
 
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Aliyun.OSS;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -367,5 +368,34 @@ namespace MiniSpore.Common
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
             }
         }
+
+        /// <summary>
+        /// 上传图片至阿里云OSS服务器
+        /// </summary>
+        /// <param name="picPath"></param>
+        /// <returns></returns>
+        public static string UploadImageAliOSS(string picPath)
+        {
+            string picAliOssUrl = "";
+            string fileName = System.IO.Path.GetFileName(picPath);
+            //填写Object完整路径，完整路径中不能包含Bucket名称
+            var objectName = string.Format("minispore/{0}", fileName);
+            // 创建OssClient实例。
+
+            if (!string.IsNullOrEmpty(Param.OssEndPoint) && !string.IsNullOrEmpty(Param.OssAccessKeyId) && !string.IsNullOrEmpty(Param.OssAccessKeySecret) && !string.IsNullOrEmpty(Param.OssBucketName) && !string.IsNullOrEmpty(Param.OSS_Url))
+            {
+                var client = new OssClient(Param.OssEndPoint, Param.OssAccessKeyId, Param.OssAccessKeySecret);
+                client.PutObject(Param.OssBucketName, objectName, picPath);
+
+                picAliOssUrl = Param.OSS_Url + objectName;
+            }
+            else
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "阿里云OSS配置信息不完整");
+            }
+            return picAliOssUrl;
+        }
+
+
     }
 }

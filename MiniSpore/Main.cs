@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SQLite;
 using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
@@ -143,6 +144,8 @@ namespace MiniSpore
                 myThread.IsBackground = true;
                 myThread.Start();
             }
+            //执行定时任务
+            Timer3Start();
         }
 
 
@@ -236,6 +239,38 @@ namespace MiniSpore
         }
 
         /// <summary>
+        /// 发送当前动作
+        /// </summary>
+        private void SendCurrAction()
+        {
+            string currAction = "";
+            switch (step)
+            {
+                case 0: currAction = "初始化"; break;
+                case 1: currAction = "收集"; break;
+                case 2: currAction = "拍照"; break;
+                case 3: currAction = "上传数据"; break;
+            }
+            ProtocolModel model = new ProtocolModel()
+            {
+                func = 200,
+                devId = Param.DeviceID,
+                err = "",
+                message = currAction
+            };
+
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+        }
+
+        /// <summary>
         /// 获取设置信息
         /// </summary>
         /// <returns></returns>
@@ -251,7 +286,7 @@ namespace MiniSpore
 
             ProtocolModel model = new ProtocolModel()
             {
-                func = 200,
+                func = 300,
                 devId = Param.DeviceID,
                 err = "",
                 message = setting
@@ -269,6 +304,46 @@ namespace MiniSpore
 
         }
 
+        /// <summary>
+        /// 发送采集数据
+        /// </summary>
+        private bool SendPictureMsg(string collectTime, string path)
+        {
+            try
+            {
+                string picAliOssUrl = Tools.UploadImageAliOSS(path);
+                if (string.IsNullOrEmpty(picAliOssUrl))
+                {
+                    return false;
+                }
+                ProtocolModel model = new ProtocolModel();
+                model.devId = Param.DeviceID;
+                model.func = 101;
+                model.err = "";
+                CollectInfo collect = new CollectInfo()
+                {
+                    collectTime = collectTime,
+                    picUrl = picAliOssUrl
+                };
+                model.message = collect;
+                string jsonData = JsonConvert.SerializeObject(model);
+                if (Param.CommunicateMode == "0")
+                {
+                    mqttClient.publishMessage(jsonData);
+                }
+                else
+                {
+                    socketClient.SendMsg(jsonData);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return false;
+            }
+        }
+
         ///// <summary>
         ///// 工作流程
         ///// </summary>
@@ -278,8 +353,27 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
-
-
+                switch (step)
+                {
+                    case 0:
+                        //初始化
+                        Initialize(); break;
+                    case 1:
+                        //采集孢子
+                        CollectSpore(); break;
+                    case 2:
+                        //拍照
+                        TakePhotos(); break;
+                    case 3:
+                        //上传数据
+                        UploadData(); break;
+                    case 4:
+                        //流程结束-更新执行指令
+                        TaskComplete(); break;
+                }
+                //当前位置
+                SendCurrAction();
+                Timer1Stop();
                 Interlocked.Exchange(ref inTimer1, 0);
             }
         }
@@ -307,11 +401,68 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer3, 1) == 0)
             {
+                string strWorkMode = Param.WorkMode;
+                if (Param.WorkMode == "0")
+                {
+                    //自动
+                    step = 0;
+                    Timer1Start();
+                }
+                else if (Param.WorkMode == "1")
+                {
+                    //定时
+                    DateTime currTime = DateTime.Now;
+                    int nCurrTime = currTime.Hour * 60 + currTime.Minute;
+                    string sql = "select * from Task where TaskDate=@TaskDate limit 1 offset 0 ";
+                    SQLiteParameter[] parameters =
+                    {
+                       new SQLiteParameter("@TaskDate", DbType.String)
+                    };
+                    parameters[0].Value = currTime.ToString("yyyy-MM-dd");
+                    DataTable dataTable = SQLiteHelper.ExecuteQuery(sql, parameters);
+                    if (dataTable != null && dataTable.Rows.Count > 0)
+                    {
+                        DataRow dataRow = dataTable.Rows[0];
+                        if (dataRow["IsRun"] + "" == "0")
+                        {
+                            int runHour = int.Parse(dataRow["RunHour"] + "");
+                            int runMinute = int.Parse(dataRow["RunMinute"] + "");
+                            int nRunTime = runHour * 60 + runMinute;
+                            if (nCurrTime > nRunTime)
+                            {
+                                //强制执行
+                                lblWorkMode.Text = "当前运行模式_强制运行";
+                                Timer1Start();
+                            }
+                        }
+                    }
+                    else
+                    {
 
+                        int nWorkTime = int.Parse(Param.WorkHour) * 60 + int.Parse(Param.WorkMinute);
+                        if (nCurrTime == nWorkTime)
+                        {
+                            sql = "insert into Task (TaskDate,RunHour,RunMinute,IsRun)values(@TaskDate,@RunHour,@RunMinute,0)";
+                            SQLiteParameter[] taskParams =
+                            {
+                               new SQLiteParameter("@TaskDate", DbType.String),
+                               new SQLiteParameter("@RunHour", DbType.Int32),
+                               new SQLiteParameter("@RunMinute", DbType.Int32)
+                            };
+                            taskParams[0].Value = currTime.ToString("yyyy-MM-dd");
+                            taskParams[1].Value = currTime.Hour;
+                            taskParams[2].Value = currTime.Minute;
+                            SQLiteHelper.ExecuteNonQuery(sql, taskParams);
+                            Timer1Start();
+                        }
+                    }
 
+                }
                 Interlocked.Exchange(ref inTimer3, 0);
             }
         }
+
+
 
         /// <summary>
         /// 初始化
@@ -335,7 +486,6 @@ namespace MiniSpore
         private void TakePhotos()
         {
 
-
         }
 
         /// <summary>
@@ -346,6 +496,20 @@ namespace MiniSpore
 
         }
 
+        /// <summary>
+        /// 执行任务结束
+        /// </summary>
+        private void TaskComplete()
+        {
+            DateTime currTime = DateTime.Now;
+            string sql = "update Task set IsRun=1 where TaskDate=@TaskDate";
+            SQLiteParameter[] parameters =
+            {
+                new SQLiteParameter("@TaskDate", DbType.String)
+            };
+            parameters[0].Value = currTime.ToString("yyyy-MM-dd");
+            SQLiteHelper.ExecuteNonQuery(sql, parameters);
+        }
 
         /// <summary>
         /// 处理消息
@@ -384,6 +548,8 @@ namespace MiniSpore
                         break;
                     case 200:
                         //获取参数
+
+
 
                         break;
                     case 201:

@@ -382,11 +382,10 @@ namespace MiniSpore
             // 
             this.lblMessage.AutoSize = true;
             this.lblMessage.Font = new System.Drawing.Font("宋体", 13.5F);
-            this.lblMessage.Location = new System.Drawing.Point(15, 34);
+            this.lblMessage.Location = new System.Drawing.Point(9, 32);
             this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(26, 18);
+            this.lblMessage.Size = new System.Drawing.Size(0, 18);
             this.lblMessage.TabIndex = 1;
-            this.lblMessage.Text = "00";
             // 
             // gbProcess
             // 
