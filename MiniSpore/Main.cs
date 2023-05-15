@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Resources;
@@ -48,6 +49,9 @@ namespace MiniSpore
         List<CCameraInfo> m_ltDeviceList = new List<CCameraInfo>();
         bool m_bGrabbing = false;//是否采集
         #endregion
+
+        //传输图像是否完成
+        private bool isTransferImage = false;
 
         #region Timer控件
 
@@ -238,112 +242,6 @@ namespace MiniSpore
             }
         }
 
-        /// <summary>
-        /// 发送当前动作
-        /// </summary>
-        private void SendCurrAction()
-        {
-            string currAction = "";
-            switch (step)
-            {
-                case 0: currAction = "初始化"; break;
-                case 1: currAction = "收集"; break;
-                case 2: currAction = "拍照"; break;
-                case 3: currAction = "上传数据"; break;
-            }
-            ProtocolModel model = new ProtocolModel()
-            {
-                func = 200,
-                devId = Param.DeviceID,
-                err = "",
-                message = currAction
-            };
-
-            string jsonData = JsonConvert.SerializeObject(model);
-            if (Param.CommunicateMode == "0")
-            {
-                mqttClient.publishMessage(jsonData);
-            }
-            else
-            {
-                socketClient.SendMsg(jsonData);
-            }
-        }
-
-        /// <summary>
-        /// 获取设置信息
-        /// </summary>
-        /// <returns></returns>
-        private void SendSettingMsg()
-        {
-            SettingInfo setting = new SettingInfo()
-            {
-                WorkMode = Param.WorkMode,
-                CollectTime = Param.CollectTime,
-                WorkHour = Param.WorkHour,
-                WorkMinute = Param.WorkMinute
-            };
-
-            ProtocolModel model = new ProtocolModel()
-            {
-                func = 300,
-                devId = Param.DeviceID,
-                err = "",
-                message = setting
-            };
-
-            string jsonData = JsonConvert.SerializeObject(model);
-            if (Param.CommunicateMode == "0")
-            {
-                mqttClient.publishMessage(jsonData);
-            }
-            else
-            {
-                socketClient.SendMsg(jsonData);
-            }
-
-        }
-
-        /// <summary>
-        /// 发送采集数据
-        /// </summary>
-        private bool SendPictureMsg(string collectTime, string path)
-        {
-            try
-            {
-                string picAliOssUrl = Tools.UploadImageAliOSS(path);
-                if (string.IsNullOrEmpty(picAliOssUrl))
-                {
-                    return false;
-                }
-                ProtocolModel model = new ProtocolModel();
-                model.devId = Param.DeviceID;
-                model.func = 101;
-                model.err = "";
-                CollectInfo collect = new CollectInfo()
-                {
-                    collectTime = collectTime,
-                    picUrl = picAliOssUrl
-                };
-                model.message = collect;
-                string jsonData = JsonConvert.SerializeObject(model);
-                if (Param.CommunicateMode == "0")
-                {
-                    mqttClient.publishMessage(jsonData);
-                }
-                else
-                {
-                    socketClient.SendMsg(jsonData);
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return false;
-            }
-        }
-
         ///// <summary>
         ///// 工作流程
         ///// </summary>
@@ -462,13 +360,18 @@ namespace MiniSpore
             }
         }
 
-
-
         /// <summary>
         /// 初始化
         /// </summary>
         private void Initialize()
         {
+            //关闭补光灯
+
+            //关闭吸风
+
+            //相机到初始位置
+
+            //拉出载玻带
 
         }
 
@@ -477,6 +380,8 @@ namespace MiniSpore
         /// </summary>
         private void CollectSpore()
         {
+            //打开吸风
+
 
         }
 
@@ -486,6 +391,10 @@ namespace MiniSpore
         private void TakePhotos()
         {
 
+            //调焦
+
+            //拍照
+
         }
 
         /// <summary>
@@ -493,6 +402,34 @@ namespace MiniSpore
         /// </summary>
         private void UploadData()
         {
+            string sql = "select * from Record where Flag=0 ";
+            DataTable dataTable = SQLiteHelper.ExecuteQuery(sql, null);
+            if (dataTable == null || dataTable.Rows.Count <= 0)
+            {
+                return;
+            }
+            foreach (DataRow row in dataTable.Rows)
+            {
+                string strCollectTime = row["CollectTime"] + "";
+                if (string.IsNullOrEmpty(strCollectTime))
+                {
+                    continue;
+                }
+                DateTime dateCollectTime = DateTime.Parse(strCollectTime);
+                string imagePath = Param.basePath + "\\Images\\" + dateCollectTime.ToString("yyyyMMddHHmmss") + ".jpg";
+                if (!File.Exists(imagePath))
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "文件不存在：" + imagePath);
+                    continue;
+                }
+                //传输图像
+                bool bIsSuccess = SendPictureMsg(strCollectTime, imagePath);
+                if (!bIsSuccess)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("文件：{0}传输失败", imagePath));
+                    break;
+                }
+            }
 
         }
 
@@ -509,6 +446,131 @@ namespace MiniSpore
             };
             parameters[0].Value = currTime.ToString("yyyy-MM-dd");
             SQLiteHelper.ExecuteNonQuery(sql, parameters);
+        }
+
+
+        /// <summary>
+        /// 发送当前动作
+        /// </summary>
+        private void SendCurrAction()
+        {
+            string currAction = "";
+            switch (step)
+            {
+                case 0: currAction = "初始化"; break;
+                case 1: currAction = "收集"; break;
+                case 2: currAction = "拍照"; break;
+                case 3: currAction = "上传数据"; break;
+            }
+            ProtocolModel model = new ProtocolModel()
+            {
+                func = 200,
+                devId = Param.DeviceID,
+                err = "",
+                message = currAction
+            };
+
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+        }
+
+        /// <summary>
+        /// 获取设置信息
+        /// </summary>
+        /// <returns></returns>
+        private void SendSettingMsg()
+        {
+            SettingInfo setting = new SettingInfo()
+            {
+                WorkMode = Param.WorkMode,
+                CollectTime = Param.CollectTime,
+                WorkHour = Param.WorkHour,
+                WorkMinute = Param.WorkMinute
+            };
+
+            ProtocolModel model = new ProtocolModel()
+            {
+                func = 300,
+                devId = Param.DeviceID,
+                err = "",
+                message = setting
+            };
+
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+
+        }
+
+        /// <summary>
+        /// 发送采集数据
+        /// </summary>
+        private bool SendPictureMsg(string collectTime, string path)
+        {
+            try
+            {
+                string picAliOssUrl = Tools.UploadImageAliOSS(path);
+                if (string.IsNullOrEmpty(picAliOssUrl))
+                {
+                    return false;
+                }
+               
+                ProtocolModel model = new ProtocolModel();
+                model.devId = Param.DeviceID;
+                model.func = 101;
+                model.err = "";
+                CollectInfo collect = new CollectInfo()
+                {
+                    collectTime = collectTime,
+                    picUrl = picAliOssUrl
+                };
+                model.message = collect;
+                string jsonData = JsonConvert.SerializeObject(model);
+
+                DateTime startTime = DateTime.Now;
+                if (Param.CommunicateMode == "0")
+                {
+                    mqttClient.publishMessage(jsonData);
+                }
+                else
+                {
+                    socketClient.SendMsg(jsonData);
+                }
+                bool bIsSuccess = true;
+                while (!isTransferImage)
+                {
+                    if (startTime.AddMinutes(2) < DateTime.Now)
+                    {
+                        bIsSuccess = false;//代表本张图像上传失败
+                        break;
+                    }
+                    Thread.Sleep(1000);
+                }
+                if (!bIsSuccess)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "图像 " + Path.GetFileName(path) + " 未收到回应，本次发送将被终止，图像路径为:  " + path);
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return false;
+            }
         }
 
         /// <summary>
@@ -544,7 +606,14 @@ namespace MiniSpore
                 {
                     case 101:
                         //采集数据（更新状态）
-
+                        string sql = "update Record set Flag=1 where CollectTime=@CollectTime";
+                        SQLiteParameter[] parameters =
+                        {
+                           new SQLiteParameter("@CollectTime", DbType.String)
+                        };
+                        parameters[0].Value = protocol.message;
+                        SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                        isTransferImage = true;
                         break;
                     case 200:
                         //获取参数
