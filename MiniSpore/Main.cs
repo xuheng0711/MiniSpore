@@ -743,6 +743,17 @@ namespace MiniSpore
         /// <param name="e"></param>
         private void pbClose_Click(object sender, EventArgs e)
         {
+            Timer1Stop();
+            Timer2Stop();
+            Timer3Stop();
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.CloseMQTT();
+            }
+            else
+            {
+                socketClient.CloseSocket();
+            }
             System.Environment.Exit(0);
         }
 

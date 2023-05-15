@@ -159,6 +159,17 @@ namespace MiniSpore.Common
         }
 
         /// <summary>
+        /// 关闭MQTT通讯
+        /// </summary>
+        public void CloseMQTT()
+        {
+            if (client.IsConnected)
+            {
+                client.Disconnect();
+            }
+        }
+
+        /// <summary>
         /// Mqtt连接断开
         /// </summary>
         /// <param name="sender"></param>
