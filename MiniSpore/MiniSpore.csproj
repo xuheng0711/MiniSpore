@@ -97,6 +97,7 @@
     <Compile Include="Common\MQTTClient.cs" />
     <Compile Include="Common\Param.cs" />
     <Compile Include="Common\PubField.cs" />
+    <Compile Include="Common\SerialPortCtrl.cs" />
     <Compile Include="Common\SocketClient.cs" />
     <Compile Include="Common\SQLiteHelper.cs" />
     <Compile Include="Common\Tools.cs" />

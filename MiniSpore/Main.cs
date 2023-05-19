@@ -314,9 +314,14 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer2, 1) == 0)
             {
 
+                if (step == 1)
+                {
 
-
-
+                }
+                else if (step == 2)
+                { 
+                
+                }
 
                 Interlocked.Exchange(ref inTimer2, 0);
             }
@@ -420,8 +425,8 @@ namespace MiniSpore
                 {
                     UploadData(false);
                 }
-                //相机搜索
 
+                //相机搜索
                 if (m_MyCamera == null || !m_MyCamera.IsDeviceConnected())
                 {
                     if (!SearchDev())
@@ -544,7 +549,6 @@ namespace MiniSpore
             };
             parameters[0].Value = currTime.ToString("yyyy-MM-dd");
             SQLiteHelper.ExecuteNonQuery(sql, parameters);
-
         }
 
         /// <summary>
@@ -841,6 +845,7 @@ namespace MiniSpore
         private void btnModify_Click(object sender, EventArgs e)
         {
             setControlAvailable(true);
+            UploadData(false);
         }
         /// <summary>
         /// 应用

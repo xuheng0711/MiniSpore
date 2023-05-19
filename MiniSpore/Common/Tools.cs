@@ -14,6 +14,34 @@ namespace MiniSpore.Common
 {
     public class Tools
     {
+
+        /// <summary>
+        /// byte[]转hexString
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        public static string ByteToHexStr(byte[] bytes)
+        {
+            try
+            {
+                string returnStr = "";
+                if (bytes != null)
+                {
+                    for (int i = 0; i < bytes.Length; i++)
+                    {
+                        returnStr += bytes[i].ToString("X2");
+                    }
+                }
+                return returnStr;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.DebLog(ex.ToString());
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return "";
+            }
+        }
+
         /// <summary>
         /// 图片读取
         /// </summary>
