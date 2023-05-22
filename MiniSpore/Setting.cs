@@ -35,7 +35,7 @@ namespace MiniSpore
             cbPort.SelectedItem = Param.SerialPort;
             cbBaudrate.SelectedItem = Param.Baudrate;
             int nWorkMode = -1;
-            int.TryParse(Param.WorkMode,out nWorkMode);
+            int.TryParse(Param.WorkMode, out nWorkMode);
             cbWorkMode.SelectedIndex = nWorkMode;
             tbCollectTime.Text = Param.CollectTime;
             tbCollectHour.Text = Param.WorkHour;
@@ -51,6 +51,8 @@ namespace MiniSpore
             foreach (string str in Portname)
             {
                 cbPort.Items.Add(str);
+                cbGPSPort.Items.Add(str);
+                cbBluetoothPort.Items.Add(str);
             }
             cbPort.SelectedIndex = -1;
         }
@@ -59,6 +61,8 @@ namespace MiniSpore
         {
             string strPort = cbPort.SelectedItem + "";
             string strBaudrate = cbBaudrate.SelectedItem + "";
+            string strBluetoothPort = cbBluetoothPort.SelectedItem + "";
+            string strGPSPort = cbGPSPort.SelectedItem + "";
             int nWorkMode = cbWorkMode.SelectedIndex;
             string strCollectTime = tbCollectTime.Text.Trim();
             string strCollectHour = tbCollectHour.Text.Trim();
@@ -67,9 +71,11 @@ namespace MiniSpore
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectHour", strCollectHour);
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectMinute", strCollectMinute);
-            if (strPort != Param.SerialPort || strBaudrate != Param.Baudrate || nWorkMode != int.Parse(Param.WorkMode))
+            if (strPort != Param.SerialPort || strBaudrate != Param.Baudrate || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
             {
                 Param.Set_ConfigParm(Main.configfileName, "Config", "SerialPort", strPort);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "BluetoothPort", strBluetoothPort);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "GPSPort", strGPSPort);
                 Param.Set_ConfigParm(Main.configfileName, "Config", "Baudrate", strBaudrate);
                 Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", nWorkMode.ToString());
                 Param.Set_ConfigParm(Main.configfileName, "Config", "SerialPort", strPort);

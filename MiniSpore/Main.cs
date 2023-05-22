@@ -172,6 +172,8 @@ namespace MiniSpore
             //执行定时任务
             Timer3Start();
             Timer4Start();
+
+            lblLocation.Text = "经度：120.7898\r\n纬度：48.7895";
         }
 
 
@@ -1139,7 +1141,7 @@ namespace MiniSpore
                     }
                     else
                     {
-                        lblMessage.Text = message;
+                        rtbMessage.Text = message;
                     }
                 }));
             }

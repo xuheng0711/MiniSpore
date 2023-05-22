@@ -15,6 +15,8 @@ namespace MiniSpore.Common
         public static string DeviceID = "";
         public static string SerialPort = "";
         public static string Baudrate = "";
+        public static string BluetoothPort = "";
+        public static string GPSPort = "";
         public static string WorkMode = "";//0:自动 1:定时
         public static string CollectTime = "";//采集时间
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
@@ -55,6 +57,8 @@ namespace MiniSpore.Common
                 DeviceID = Read_ConfigParam(configfileName, "Config", "DeviceID");//设备编号
                 SerialPort= Read_ConfigParam(configfileName, "Config", "SerialPort");
                 Baudrate = Read_ConfigParam(configfileName, "Config", "Baudrate");
+                BluetoothPort = Read_ConfigParam(configfileName, "Config", "BluetoothPort");
+                GPSPort = Read_ConfigParam(configfileName, "Config", "GPSPort");
                 CollectTime = Read_ConfigParam(configfileName, "Config", "CollectTime");//采集时长
                 CommunicateMode = Read_ConfigParam(configfileName, "Config", "CommunicateMode");
                 WorkMode = Read_ConfigParam(configfileName, "Config", "WorkMode");//运行模式
