@@ -258,13 +258,14 @@ namespace MiniSpore
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未配置GPS串口通讯");
                 }
-                lblError.Text = errorMessage;
             }
             catch (Exception ex)
             {
                 isSuccess = false;
+                errorMessage = ex.Message;
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
             }
+            lblError.Text = errorMessage;
             return isSuccess;
         }
 
@@ -1042,7 +1043,6 @@ namespace MiniSpore
         private void btnModify_Click(object sender, EventArgs e)
         {
             setControlAvailable(true);
-            UploadData(false);
         }
         /// <summary>
         /// 应用
