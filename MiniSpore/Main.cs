@@ -157,9 +157,7 @@ namespace MiniSpore
             //开机自启
             Tools.AutoStart(true);
             pushSettingMessage = SendSettingMsg;
-            //串口数据绑定事件
-            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
-            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
+
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -168,12 +166,15 @@ namespace MiniSpore
             TimerInit();
             //初始化参数
             Param.Init_Param(configfileName);
-
             //初始化串口信息
             if (!SerialInit())
             {
                 return;
             }
+            //串口数据绑定事件
+            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
+            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
+
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
@@ -368,10 +369,22 @@ namespace MiniSpore
         {
             try
             {
-                byte[] data = new byte[2000];
-                int length = gpsSerialPort.Read(data, 0, 2000);
-                string Read = Encoding.ASCII.GetString(data, 0, length);
-                rtbMessage.Text = Read;
+                if (bluetoothSerialPort == null || !bluetoothSerialPort.IsOpen)
+                {
+                    return;
+                }
+                Thread.Sleep(300);//延迟接收数据
+                int ilen = bluetoothSerialPort.BytesToRead;
+                byte[] readBytes = new byte[ilen];
+                bluetoothSerialPort.Read(readBytes, 0, ilen);
+                string receiveMessage = ASCIIEncoding.ASCII.GetString(readBytes);
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "蓝牙接收指令:" + receiveMessage);
+                if (string.IsNullOrEmpty(receiveMessage))
+                {
+                    return;
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -1323,7 +1336,12 @@ namespace MiniSpore
                     }
                     else
                     {
-                        rtbMessage.Text = message;
+
+                        if (message.Length > 15)
+                        {
+                            message = message.Substring(0, 15) + "\r\n" + message.Substring(15);
+                        }
+                        lblMessage.Text = message;
                     }
                 }));
             }

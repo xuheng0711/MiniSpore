@@ -50,9 +50,12 @@ namespace MiniSpore
             this.txtDeviceCode = new System.Windows.Forms.TextBox();
             this.label57 = new System.Windows.Forms.Label();
             this.gbDeviceMessage = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.lblMessage = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.lblError = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.lblLocation = new System.Windows.Forms.Label();
             this.gbProcess = new System.Windows.Forms.GroupBox();
             this.label3 = new System.Windows.Forms.Label();
             this.pb4 = new System.Windows.Forms.PictureBox();
@@ -72,9 +75,6 @@ namespace MiniSpore
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.pbMin = new System.Windows.Forms.PictureBox();
             this.pbLogo = new System.Windows.Forms.PictureBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.rtbMessage = new System.Windows.Forms.RichTextBox();
-            this.lblLocation = new System.Windows.Forms.Label();
             this.panelMain.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.gbParameter.SuspendLayout();
@@ -82,6 +82,7 @@ namespace MiniSpore
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.gbDeviceMessage.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.gbProcess.SuspendLayout();
@@ -96,7 +97,6 @@ namespace MiniSpore
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
-            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // panelMain
@@ -350,6 +350,26 @@ namespace MiniSpore
             this.gbDeviceMessage.TabStop = false;
             this.gbDeviceMessage.Text = "设备信息";
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.lblMessage);
+            this.groupBox2.Font = new System.Drawing.Font("宋体", 12F);
+            this.groupBox2.Location = new System.Drawing.Point(533, 109);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(254, 126);
+            this.groupBox2.TabIndex = 4;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "信息";
+            // 
+            // lblMessage
+            // 
+            this.lblMessage.AutoSize = true;
+            this.lblMessage.Font = new System.Drawing.Font("宋体", 11F);
+            this.lblMessage.Location = new System.Drawing.Point(13, 43);
+            this.lblMessage.Name = "lblMessage";
+            this.lblMessage.Size = new System.Drawing.Size(0, 15);
+            this.lblMessage.TabIndex = 0;
+            // 
             // groupBox4
             // 
             this.groupBox4.Controls.Add(this.lblError);
@@ -381,6 +401,15 @@ namespace MiniSpore
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "设备位置";
+            // 
+            // lblLocation
+            // 
+            this.lblLocation.AutoSize = true;
+            this.lblLocation.Font = new System.Drawing.Font("宋体", 11F);
+            this.lblLocation.Location = new System.Drawing.Point(10, 24);
+            this.lblLocation.Name = "lblLocation";
+            this.lblLocation.Size = new System.Drawing.Size(0, 15);
+            this.lblLocation.TabIndex = 0;
             // 
             // gbProcess
             // 
@@ -590,38 +619,6 @@ namespace MiniSpore
             this.pbLogo.TabIndex = 1;
             this.pbLogo.TabStop = false;
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.rtbMessage);
-            this.groupBox2.Font = new System.Drawing.Font("宋体", 12F);
-            this.groupBox2.Location = new System.Drawing.Point(533, 109);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(254, 126);
-            this.groupBox2.TabIndex = 4;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "信息";
-            // 
-            // rtbMessage
-            // 
-            this.rtbMessage.BackColor = System.Drawing.SystemColors.Control;
-            this.rtbMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.rtbMessage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbMessage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
-            this.rtbMessage.Location = new System.Drawing.Point(3, 22);
-            this.rtbMessage.Name = "rtbMessage";
-            this.rtbMessage.Size = new System.Drawing.Size(248, 101);
-            this.rtbMessage.TabIndex = 0;
-            this.rtbMessage.Text = "";
-            // 
-            // lblLocation
-            // 
-            this.lblLocation.AutoSize = true;
-            this.lblLocation.Font = new System.Drawing.Font("宋体", 11F);
-            this.lblLocation.Location = new System.Drawing.Point(10, 24);
-            this.lblLocation.Name = "lblLocation";
-            this.lblLocation.Size = new System.Drawing.Size(0, 15);
-            this.lblLocation.TabIndex = 0;
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -643,6 +640,8 @@ namespace MiniSpore
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
             this.gbDeviceMessage.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             this.groupBox3.ResumeLayout(false);
@@ -663,7 +662,6 @@ namespace MiniSpore
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbMin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
-            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -714,8 +712,8 @@ namespace MiniSpore
         private System.Windows.Forms.PictureBox pbSetting;
         private System.Windows.Forms.ComboBox cbCommunicateMode;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.RichTextBox rtbMessage;
         private System.Windows.Forms.Label lblLocation;
+        private System.Windows.Forms.Label lblMessage;
     }
 }
 
