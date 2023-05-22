@@ -37,7 +37,7 @@ namespace MiniSpore
                     if (principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
                     {
                         //如果是管理员，则直接运行
-                        Application.Run(new MainForm());
+                        Application.Run(new Main());
                     }
                     else
                     {

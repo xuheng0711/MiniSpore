@@ -14,6 +14,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Resources;
@@ -83,6 +84,20 @@ namespace MiniSpore
         int inTimer4 = 0;
         System.Timers.Timer timer4 = new System.Timers.Timer();
 
+        #region 串口
+        /// <summary>
+        /// 主串口
+        /// </summary>
+        private SerialPort mainSerialPort = new SerialPort();
+        /// <summary>
+        /// 蓝牙串口
+        /// </summary>
+        private SerialPort bluetoothSerialPort = new SerialPort();
+        /// <summary>
+        /// GPS串口
+        /// </summary>
+        private SerialPort gpsSerialPort = new SerialPort();
+        #endregion
 
         private void Timer1Start()
         {
@@ -132,7 +147,7 @@ namespace MiniSpore
 #if DEBUG
             this.WindowState = FormWindowState.Normal;
 #else
-            this.WindowState = FormWindowState.Maximized;
+            this.WindowState = FormWindowState.Normal;
 #endif
             //获取流程图标
             imageProcess = (Image)resources.GetObject("pictureBox6_Image");
@@ -142,7 +157,9 @@ namespace MiniSpore
             //开机自启
             Tools.AutoStart(true);
             pushSettingMessage = SendSettingMsg;
-
+            //串口数据绑定事件
+            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
+            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -151,6 +168,12 @@ namespace MiniSpore
             TimerInit();
             //初始化参数
             Param.Init_Param(configfileName);
+
+            //初始化串口信息
+            if (!SerialInit())
+            {
+                return;
+            }
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
@@ -173,9 +196,76 @@ namespace MiniSpore
             Timer3Start();
             Timer4Start();
 
-            lblLocation.Text = "经度：120.7898\r\n纬度：48.7895";
         }
+        /// <summary>
+        /// 初始化串口
+        /// </summary>
+        private bool SerialInit()
+        {
+            bool isSuccess = true;
+            try
+            {
+                //主串口
+                if (!string.IsNullOrEmpty(Param.SerialPort))
+                {
+                    if (mainSerialPort.IsOpen)
+                    {
+                        mainSerialPort.Close();
+                    }
+                    mainSerialPort.PortName = Param.SerialPort;
+                    mainSerialPort.BaudRate = 9600;
+                    mainSerialPort.ReceivedBytesThreshold = 1;
+                    mainSerialPort.Open();
+                }
+                else
+                {
+                    isSuccess = false;
+                    errorMessage = "未配置主串口通讯";
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "未配置主串口通讯");
+                }
 
+                if (!string.IsNullOrEmpty(Param.BluetoothPort))
+                {
+
+                    if (bluetoothSerialPort.IsOpen)
+                    {
+                        bluetoothSerialPort.Close();
+                    }
+                    bluetoothSerialPort.PortName = Param.BluetoothPort;
+                    bluetoothSerialPort.BaudRate = 9600;
+                    bluetoothSerialPort.ReceivedBytesThreshold = 1;
+                    bluetoothSerialPort.Open();
+                }
+                else
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未配置蓝牙串口通讯");
+                }
+
+
+                if (!string.IsNullOrEmpty(Param.GPSPort))
+                {
+                    if (gpsSerialPort.IsOpen)
+                    {
+                        gpsSerialPort.Close();
+                    }
+                    gpsSerialPort.PortName = Param.GPSPort;
+                    gpsSerialPort.BaudRate = 9600;
+                    gpsSerialPort.ReceivedBytesThreshold = 1;
+                    gpsSerialPort.Open();
+                }
+                else
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未配置GPS串口通讯");
+                }
+                lblError.Text = errorMessage;
+            }
+            catch (Exception ex)
+            {
+                isSuccess = false;
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
+            }
+            return isSuccess;
+        }
 
         private void Init()
         {
@@ -269,6 +359,72 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 蓝牙接收数据
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void bluetoothSerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            try
+            {
+                byte[] data = new byte[2000];
+                int length = gpsSerialPort.Read(data, 0, 2000);
+                string Read = Encoding.ASCII.GetString(data, 0, length);
+                rtbMessage.Text = Read;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// GPS接收数据
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void gpsSerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            try
+            {
+                byte[] data = new byte[200];
+                int length = gpsSerialPort.Read(data, 0, 200);
+                string Read = Encoding.Default.GetString(data, 0, length);
+                if (Read.Contains("$GPGLL"))
+                {
+                    string str = Read.Substring(Read.IndexOf("$GPGLL"));
+                    string[] bby = str.Split(',');
+                    if (bby.Count() > 5)
+                    {
+
+                        if (bby[1] == "")
+                            return;
+                        if (bby[3] == "")
+                            return;
+                        double dlat = Convert.ToDouble(bby[1]) * 0.01;
+                        double dlon = Convert.ToDouble(bby[3]) * 0.01;
+                        dlat = Math.Floor(dlat) + ((dlat - Math.Floor(dlat)) / 0.6);
+                        dlon = Math.Floor(dlon) + ((dlon - Math.Floor(dlon)) / 0.6);
+
+                        string message = string.Format("纬度:{0}\r\n经度:{1}", dlat, dlon);
+                        lblLocation.Text = message;
+                        gpsSerialPort.Close();
+
+                        //发送位置信息
+                        SendLocation(dlat, dlon);
+
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
+
         ///// <summary>
         ///// 工作流程
         ///// </summary>
@@ -321,8 +477,8 @@ namespace MiniSpore
 
                 }
                 else if (step == 2)
-                { 
-                
+                {
+
                 }
 
                 Interlocked.Exchange(ref inTimer2, 0);
@@ -642,7 +798,33 @@ namespace MiniSpore
             }
 
         }
-
+        /// <summary>
+        /// 发送位置信息
+        /// </summary>
+        /// <param name="lat"></param>
+        /// <param name="lon"></param>
+        private void SendLocation(double lat, double lon)
+        {
+            ProtocolModel model = new ProtocolModel();
+            model.devId = Param.DeviceID;
+            model.func = 101;
+            model.err = "";
+            Location location = new Location()
+            {
+                lat = lat,
+                lon = lon
+            };
+            model.message = location;
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                socketClient.SendMsg(jsonData);
+            }
+        }
         /// <summary>
         /// 发送采集数据
         /// </summary>
@@ -1169,12 +1351,24 @@ namespace MiniSpore
             Timer4Stop();
             if (Param.CommunicateMode == "0")
             {
-                mqttClient.CloseMQTT();
+                if (mqttClient != null)
+                    mqttClient.CloseMQTT();
             }
             else
             {
-                socketClient.CloseSocket();
+                if (socketClient != null)
+                    socketClient.CloseSocket();
             }
+
+            if (mainSerialPort.IsOpen)
+                mainSerialPort.Close();
+
+            if (bluetoothSerialPort.IsOpen)
+                bluetoothSerialPort.Close();
+
+            if (gpsSerialPort.IsOpen)
+                gpsSerialPort.Close();
+
             System.Environment.Exit(0);
         }
 

@@ -25,7 +25,11 @@ namespace MiniSpore.Model
         /// </summary>
         public object message { get; set; }
     }
-
+    public class Location
+    {
+        public double lat;
+        public double lon;
+    }
     public class CollectInfo
     {
         public string collectTime { get; set; }
