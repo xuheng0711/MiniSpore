@@ -43,6 +43,8 @@ namespace MiniSpore
         public SocketClient socketClient = null;
         //MQTT服务器
         public MQTTClient mqttClient = null;
+        //串口通讯
+        SerialPortCtrl serialPortCtrl = new SerialPortCtrl();
 
         #region 相机对象
         private CCamera m_MyCamera = null;//相机对象
@@ -303,7 +305,7 @@ namespace MiniSpore
 
             //任务
             timer3.Elapsed += new ElapsedEventHandler(timer3_Elapsed);
-            timer3.Interval = 1000;
+            timer3.Interval = 5 * 1000;
 
             //定时运行程序
             timer4.Elapsed += new ElapsedEventHandler(timer4_Elapsed);
@@ -424,10 +426,8 @@ namespace MiniSpore
                         string message = string.Format("纬度:{0}\r\n经度:{1}", dlat, dlon);
                         lblLocation.Text = message;
                         gpsSerialPort.Close();
-
                         //发送位置信息
                         SendLocation(dlat, dlon);
-
                     }
                 }
 
@@ -448,6 +448,7 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
+                errorMessage = "";
                 Timer1Stop();
                 switch (step)
                 {
@@ -581,6 +582,7 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer4, 1) == 0)
             {
+                errorMessage = "";
                 string currTime = DateTime.Now.ToString("HH:mm");
 
                 //定时关机
@@ -640,6 +642,7 @@ namespace MiniSpore
             //相机到初始位置
 
             //拉出载玻带
+            
 
             step = 1;
             Timer2Start();
@@ -739,11 +742,13 @@ namespace MiniSpore
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {
-                mqttClient.publishMessage(jsonData);
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
             }
             else
             {
-                socketClient.SendMsg(jsonData);
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
             }
         }
 
@@ -771,11 +776,13 @@ namespace MiniSpore
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {
-                mqttClient.publishMessage(jsonData);
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
             }
             else
             {
-                socketClient.SendMsg(jsonData);
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
             }
         }
 
@@ -804,11 +811,13 @@ namespace MiniSpore
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {
-                mqttClient.publishMessage(jsonData);
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
             }
             else
             {
-                socketClient.SendMsg(jsonData);
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
             }
 
         }
@@ -821,7 +830,7 @@ namespace MiniSpore
         {
             ProtocolModel model = new ProtocolModel();
             model.devId = Param.DeviceID;
-            model.func = 101;
+            model.func = 102;
             model.err = "";
             Location location = new Location()
             {
@@ -832,11 +841,13 @@ namespace MiniSpore
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {
-                mqttClient.publishMessage(jsonData);
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
             }
             else
             {
-                socketClient.SendMsg(jsonData);
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
             }
         }
         /// <summary>
@@ -867,11 +878,13 @@ namespace MiniSpore
                 DateTime startTime = DateTime.Now;
                 if (Param.CommunicateMode == "0")
                 {
-                    mqttClient.publishMessage(jsonData);
+                    if (mqttClient != null)
+                        mqttClient.publishMessage(jsonData);
                 }
                 else
                 {
-                    socketClient.SendMsg(jsonData);
+                    if (socketClient != null)
+                        socketClient.SendMsg(jsonData);
                 }
                 bool bIsSuccess = true;
                 while (!isTransferImage)
