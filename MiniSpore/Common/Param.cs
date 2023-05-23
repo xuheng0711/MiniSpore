@@ -19,7 +19,10 @@ namespace MiniSpore.Common
         public static string GPSPort = "";
         public static string WorkMode = "";//0:自动 1:定时
         public static string CollectTime = "";//采集时间
-        public static string DateFormat = "yyyy-MM-dd HH:mm:ss"; 
+        public static string DateFormat = "yyyy-MM-dd HH:mm:ss";
+        public static string CollectStrength = "";//载玻带长度
+        public static string AccumulateSteps = "";//累计步数
+        
         //通讯方式
         public static string CommunicateMode = "";//0:MQTT 1:Socket
         public static string MQTTServerIP = "";
@@ -62,6 +65,8 @@ namespace MiniSpore.Common
                 CollectTime = Read_ConfigParam(configfileName, "Config", "CollectTime");//采集时长
                 CommunicateMode = Read_ConfigParam(configfileName, "Config", "CommunicateMode");
                 WorkMode = Read_ConfigParam(configfileName, "Config", "WorkMode");//运行模式
+                CollectStrength = Read_ConfigParam(configfileName, "Config", "CollectStrength");
+                AccumulateSteps = Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//累计步数
                 //MQTT协议
                 MQTTServerIP = Read_ConfigParam(configfileName, "Config", "MQTTServerIP");
                 MQTTServerPort = Read_ConfigParam(configfileName, "Config", "MQTTServerPort");

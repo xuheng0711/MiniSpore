@@ -364,10 +364,10 @@ namespace MiniSpore
             // lblMessage
             // 
             this.lblMessage.AutoSize = true;
-            this.lblMessage.Font = new System.Drawing.Font("宋体", 11F);
-            this.lblMessage.Location = new System.Drawing.Point(13, 43);
+            this.lblMessage.Font = new System.Drawing.Font("宋体", 11.5F);
+            this.lblMessage.Location = new System.Drawing.Point(13, 32);
             this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(0, 15);
+            this.lblMessage.Size = new System.Drawing.Size(0, 16);
             this.lblMessage.TabIndex = 0;
             // 
             // groupBox4

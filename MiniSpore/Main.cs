@@ -387,6 +387,8 @@ namespace MiniSpore
                     return;
                 }
 
+                //执行指令
+
 
             }
             catch (Exception ex)
@@ -450,6 +452,10 @@ namespace MiniSpore
             {
                 errorMessage = "";
                 Timer1Stop();
+                //当前流程
+                setProcess();
+                //当前位置
+                SendCurrAction();
                 switch (step)
                 {
                     case 0:
@@ -470,10 +476,7 @@ namespace MiniSpore
                         Timer3Start();
                         break;
                 }
-                //当前流程
-                setProcess();
-                //当前位置
-                SendCurrAction();
+
                 Interlocked.Exchange(ref inTimer1, 0);
             }
         }
@@ -486,16 +489,35 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer2, 1) == 0)
             {
-
-                if (step == 1)
+                DateTime dateNowTime = DateTime.Now;
+                this.Invoke(new EventHandler(delegate
                 {
+                    if (step == 1)
+                    {
+                        //初始化一分钟时间
+                        lblMessage.Text = "设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(1), dateNowTime) + " 秒";
+                        if (dateNowTime > executeTime.AddMinutes(1))
+                        {
+                            lblMessage.Text = "无数据";
+                            Timer2Stop();
+                            Timer1Start();
+                        }
+                    }
+                    else if (step == 2)
+                    {
+                        //吸风时长
+                        int nCollectTime = int.Parse(Param.CollectTime);
+                        lblMessage.Text = "收集时间倒计时:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(nCollectTime), dateNowTime) + " 秒";
+                        if (dateNowTime > executeTime.AddMinutes(nCollectTime))
+                        {
+                            lblMessage.Text = "无数据";
+                            OperaCommand(0x94, 0);
+                            Timer1Start();
+                            Timer2Stop();
+                        }
+                    }
 
-                }
-                else if (step == 2)
-                {
-
-                }
-
+                }));
                 Interlocked.Exchange(ref inTimer2, 0);
             }
 
@@ -634,16 +656,20 @@ namespace MiniSpore
         private void Initialize()
         {
             executeTime = DateTime.Now;
-
             //关闭补光灯
-
+            OperaCommand(0x95, 0);
             //关闭吸风
-
+            OperaCommand(0x94, 0);
             //相机到初始位置
-
-            //拉出载玻带
-            
-
+            OperaCommand(0x30, 0);
+            //拉出载玻带（顺时针）
+            int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
+            byte[] res = OperaCommand(0x11, runSteps);
+            if (res != null)
+            {
+                Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
+                Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
+            }
             step = 1;
             Timer2Start();
         }
@@ -654,8 +680,9 @@ namespace MiniSpore
         private void CollectSpore()
         {
             //打开吸风
-
-
+            OperaCommand(0x91, 800);
+            step = 2;
+            Timer2Start();
         }
 
         /// <summary>
@@ -726,6 +753,19 @@ namespace MiniSpore
             SQLiteHelper.ExecuteNonQuery(sql, parameters);
         }
 
+        /// <summary>
+        /// 计算主动轮带出制定长度载波带需要运转的步数
+        /// </summary>
+        /// <param name="length">载玻带长度</param>
+        /// <returns></returns>
+        private int CalculationDrivingWheelSteps(int length)
+        {
+            int nAccumulateSteps = int.Parse(Param.AccumulateSteps);
+            int currWeeks = int.Parse((nAccumulateSteps / 6400.0f).ToString("F0")) + 1;//已经转动的周数
+            double perimeter = 2 * Math.PI * (38.65 + currWeeks * 0.09f);//周长
+            double step = (length / perimeter) * 6400.0f;
+            return int.Parse(step.ToString("F0"));
+        }
         /// <summary>
         /// 发送通用成功信息
         /// </summary>
@@ -1276,6 +1316,57 @@ namespace MiniSpore
             }
         }
 
+        #endregion
+
+        #region 操作方法
+
+
+        private byte[] OperaCommand(byte func, int value)
+        {
+            try
+            {
+                if (mainSerialPort == null || !mainSerialPort.IsOpen)
+                    return null;
+                mainSerialPort.DiscardInBuffer();
+                byte[] cmd = { 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+                cmd[2] = func;
+                cmd[3] = (byte)((value >> 24) & 0xFF);
+                cmd[4] = (byte)((value >> 16) & 0xFF);
+                cmd[5] = (byte)((value >> 8) & 0xFF);
+                cmd[6] = (byte)((value >> 0) & 0xFF);
+                cmd[7] = GetCheckByte(cmd);
+                return serialPortCtrl.SendCommand(mainSerialPort, cmd);
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return null;
+            }
+        }
+
+
+        /// <summary>
+        /// 校验
+        /// </summary>
+        /// <param name="by"></param>
+        /// <returns></returns>
+        private byte GetCheckByte(byte[] cmd)
+        {
+            try
+            {
+                int size = cmd.Length;
+                int crc = 0;
+                for (int i = 1; i < size - 1; i++)
+                    crc += cmd[i];
+                return (byte)(crc & 0xFF);
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return 0;
+            }
+
+        }
         #endregion
 
         /// <summary>

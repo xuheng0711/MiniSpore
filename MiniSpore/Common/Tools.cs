@@ -1,10 +1,12 @@
 ﻿using Aliyun.OSS;
 using Microsoft.Win32;
+using MiniSpore.Model;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -328,31 +330,6 @@ namespace MiniSpore.Common
         }
 
         /// <summary>
-        /// 图片转BASE64
-        /// </summary>
-        /// <param name="picPath"></param>
-        /// <returns></returns>
-        public static string GetBase64FromPic(string picPath)
-        {
-            try
-            {
-                FileStream fs = new FileStream(picPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                long size = fs.Length;
-                byte[] array = new byte[size];
-                fs.Read(array, 0, array.Length);
-                fs.Close();
-                Base64Encoder en = new Base64Encoder();
-                return en.GetEncoded(array);
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.DebLog(ex.ToString());
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return "";
-            }
-        }
-
-        /// <summary>
         /// 获取当前登录用户(可用于管理员身份运行)
         /// </summary>
         /// <returns></returns>
@@ -367,6 +344,17 @@ namespace MiniSpore.Common
                 username = Marshal.PtrToStringAnsi(buffer);
             }
             return username;
+        }
+
+        public static double GetCPUTemperature()
+        {
+            double cpuTemperature = 0;
+            ManagementObjectSearcher mos = new ManagementObjectSearcher(@"root\WMI", "Select * From MSAcpi_ThermalZoneTemperature");
+            foreach (System.Management.ManagementObject mo in mos.Get())
+            {
+                cpuTemperature = Convert.ToDouble(Convert.ToDouble(mo.GetPropertyValue("CurrentTemperature").ToString()) - 2732) / 10;
+            }
+            return cpuTemperature;
         }
 
         /// <summary>

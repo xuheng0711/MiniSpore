@@ -58,52 +58,24 @@ namespace MiniSpore.Common
         /// </summary>
         /// <param name="serialPort">serialPort</param>
         /// <param name="Msg">数据</param>
-        public string SendMsg(SerialPort serialPort, string Msg)
+        public void SendMsg(SerialPort serialPort, string Msg)
         {
             try
             {
                 if (serialPort == null || !serialPort.IsOpen)
                 {
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "串口未打开!");
-                    return "";
+                    return;
                 }
-                serialPort.DiscardInBuffer();
+                serialPort.DiscardInBuffer();//清理缓存
                 Msg += "\r\n";
-                DebOutPut.DebLog("发:" + Msg);
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Msg);
-                string recStr = "";
-                int exectCount = 0;
-                while (exectCount < 3)
-                {
-                    serialPort.Write(Msg);
-                    recStr = serialPort.ReadLine();
-                    if (string.IsNullOrEmpty(recStr))
-                    {
-                        exectCount++;
-                        continue;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                //串口发送指令
-                if (string.IsNullOrEmpty(recStr) && exectCount == 3)
-                {
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送未收到回复，指令为：" + Msg);
-                }
-                else
-                {
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "接到指令为：" + recStr);
-                }
-                return recStr;
+                serialPort.Write(Msg);
             }
             catch (Exception ex)
             {
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return "";
             }
-
         }
 
         /// <summary>
