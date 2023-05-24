@@ -483,16 +483,16 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
                 errorMessage = "";
-                //if (!isBand)
-                //{
-                //    errorMessage = "载玻带异常";
-                //    return;
-                //}
-                //if (step == 1 && !isX1)
-                //{
-                //    errorMessage = "限位X1异常";
-                //    return;
-                //}
+                if (!isBand)
+                {
+                    errorMessage = "载玻带异常";
+                    return;
+                }
+                if (step == 1 && !isX1)
+                {
+                    errorMessage = "限位X1异常";
+                    return;
+                }
                 Timer1Stop();
                 //当前流程
                 setProcess();
@@ -502,17 +502,20 @@ namespace MiniSpore
                 {
                     case 0:
                         //初始化
-                        Initialize(); break;
+                        Initialize(); 
+                        break;
                     case 1:
                         //采集孢子
-                        CollectSpore(); break;
+                        CollectSpore();
+                        break;
                     case 2:
                         //拍照
                         TakePhotos();
                         break;
                     case 3:
                         //上传数据
-                        UploadData(); break;
+                        UploadData(); 
+                        break;
                     case 4:
                         //流程结束-更新执行指令
                         TaskComplete();
@@ -759,33 +762,33 @@ namespace MiniSpore
             byte[] res = null;
             //关闭补光灯
             res = OperaCommand(0x95, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //关闭吸风
             res = OperaCommand(0x94, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //相机到初始位置(X1)
             res = OperaCommand(0x30, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //拉出载玻带（顺时针）
             int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
             res = OperaCommand(0x11, runSteps);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
             Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
 
