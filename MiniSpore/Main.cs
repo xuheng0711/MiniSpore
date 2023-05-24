@@ -31,6 +31,8 @@ namespace MiniSpore
     {
         public static PushSettingMessage pushSettingMessage;
         private string errorMessage = "";
+        //拍照步数
+        private int photoStep = 4;
         //位置标记
         private int step = -1;
         ////配置文件地址
@@ -45,8 +47,6 @@ namespace MiniSpore
         public MQTTClient mqttClient = null;
         //串口通讯
         SerialPortCtrl serialPortCtrl = new SerialPortCtrl();
-        //接收图像信息
-        Thread m_hReceiveThread = null;
         private static Object BufForDriverLock = new Object();
         CImage m_pcImgForDriver;        // 图像信息
         #region 相机对象
@@ -483,16 +483,16 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
                 errorMessage = "";
-                if (!isBand)
-                {
-                    errorMessage = "载玻带异常";
-                    return;
-                }
-                if (step == 1 && !isX1)
-                {
-                    errorMessage = "限位X1异常";
-                    return;
-                }
+                //if (!isBand)
+                //{
+                //    errorMessage = "载玻带异常";
+                //    return;
+                //}
+                //if (step == 1 && !isX1)
+                //{
+                //    errorMessage = "限位X1异常";
+                //    return;
+                //}
                 Timer1Stop();
                 //当前流程
                 setProcess();
@@ -509,7 +509,6 @@ namespace MiniSpore
                     case 2:
                         //拍照
                         TakePhotos();
-                        CameraClose();
                         break;
                     case 3:
                         //上传数据
@@ -760,33 +759,33 @@ namespace MiniSpore
             byte[] res = null;
             //关闭补光灯
             res = OperaCommand(0x95, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //关闭吸风
             res = OperaCommand(0x94, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //相机到初始位置(X1)
             res = OperaCommand(0x30, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //拉出载玻带（顺时针）
             int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
             res = OperaCommand(0x11, runSteps);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
             Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
 
@@ -820,18 +819,52 @@ namespace MiniSpore
             }
             //打开补光灯
             OperaCommand(0x92, 800);
-            //移动轴二对焦
-            OperaCommand(0x31, 0);
-            //软触捕捉图像
-            m_MyCamera.SetCommandValue("TriggerSoftware");
+            int photoStepNumber = photoStep;
             Thread.Sleep(2000);
-            //分析图像
+            //对焦（从限位X1开始直到限位X2，采集到合适图像及终止，如果直到限位X2都采集不到合适图像及终止）
+            while (!isX2)
+            {
+                int imageCount = 0;
+                //移动轴二对焦
+                OperaCommand(0x31, photoStepNumber);
+                Thread.Sleep(1000);
+                CFrameout pcFrameInfo = new CFrameout();
+                int nRet = m_MyCamera.GetImageBuffer(ref pcFrameInfo, 1000);
+                if (nRet == CErrorDefine.MV_OK)
+                {
+                    m_pcImgForDriver = pcFrameInfo.Image;
+                    DateTime currTime = DateTime.Now;
+                    string imageName = currTime.ToString("yyyyMMddHHmmss") + ".jpg";
+                    string imagePath = SaveImage(imageName);
+                    //分析图像
+                    if (!ImageAnalysis(imagePath))
+                    {
+                        Thread.Sleep(2000);
+                        File.Delete(imagePath);
+                    }
+                    else
+                    {
+                        string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
+                        SQLiteParameter[] parameters =
+                        {
+                            new SQLiteParameter("@CollectTime", DbType.String)
+                        };
+                        parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
+                        SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                        imageCount++;
+                    }
+                }
 
-            //对焦
+                photoStepNumber += photoStep;
+                if (imageCount >= 3)
+                {
+                    break;
+                }
+            }
 
-            //拍照
-            SaveImage();
-
+            step = 3;
+            CameraClose();
+            Timer1Start();
         }
 
         /// <summary>
@@ -1389,8 +1422,7 @@ namespace MiniSpore
 
                 // ch:设置采集连续模式 | en:Set Continues Aquisition Mode
                 m_MyCamera.SetEnumValue("AcquisitionMode", (uint)MV_CAM_ACQUISITION_MODE.MV_ACQ_MODE_CONTINUOUS);
-                m_MyCamera.SetEnumValue("TriggerMode", (uint)MV_CAM_TRIGGER_MODE.MV_TRIGGER_MODE_ON);
-                m_MyCamera.SetEnumValue("TriggerSource", (uint)MV_CAM_TRIGGER_SOURCE.MV_TRIGGER_SOURCE_SOFTWARE);
+                m_MyCamera.SetEnumValue("TriggerMode", (uint)MV_CAM_TRIGGER_MODE.MV_TRIGGER_MODE_OFF);
                 return true;
             }
             catch (Exception ex)
@@ -1426,9 +1458,6 @@ namespace MiniSpore
                 else
                 {
                     m_bGrabbing = true;
-                    //获取图像
-                    //m_hReceiveThread = new Thread(ReceiveThreadProcess);
-                    //m_hReceiveThread.Start();
                     return true;
                 }
             }
@@ -1441,36 +1470,16 @@ namespace MiniSpore
         }
 
         /// <summary>
-        /// 捕捉图像信息
-        /// </summary>
-        public void ReceiveThreadProcess()
-        {
-            CFrameout pcFrameInfo = new CFrameout();
-            int nRet = -1;
-            while (m_bGrabbing)
-            {
-                nRet = m_MyCamera.GetImageBuffer(ref pcFrameInfo, 1000);
-                if (nRet == CErrorDefine.MV_OK)
-                {
-                    lock (BufForDriverLock)
-                    {
-                        m_pcImgForDriver = pcFrameInfo.Image;
-                    }
-                }
-                Thread.Sleep(500);
-            }
-        }
-
-
-        /// <summary>
         /// 图像分析
         /// </summary>
         /// <param name="path">图像路径</param>
         /// <returns>包围性状所占总面积</returns>
-        private double ImageAnalysis(string path)
+        private bool ImageAnalysis(string path)
         {
+            bool isMeet = false;
             try
             {
+
                 //原始图像
                 Mat img = CvInvoke.Imread(path);
                 //灰度化
@@ -1487,31 +1496,32 @@ namespace MiniSpore
                 CvInvoke.FindContours(dst, contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
                 //遍历包围性轮廓的最大长度 
                 double are = 0;
-                double ares = 0;
                 double count = 0;
-                //VectorOfPoint vp = new VectorOfPoint();
                 for (int i = 0; i < contours.Size; i++)
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 3000/*过滤掉面积小于3000的*/)
+                    if (are < 8000/*过滤掉面积小于3000的*/)
                     {
                         continue;
                     }
                     count++;
-                    ares += are;
                 }
                 contours.Dispose();
                 element.Dispose();
                 dst.Dispose();
                 gray.Dispose();
                 img.Dispose();
-                return ares;
+                if (count > 5)
+                {
+                    isMeet = true;
+                }
+                return isMeet;
             }
             catch (Exception ex)
             {
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return 0;
+                return false;
             }
         }
 
@@ -1519,11 +1529,9 @@ namespace MiniSpore
         /// 保存图像
         /// </summary>
         /// <returns></returns>
-        private string SaveImage()
+        private string SaveImage(string imageName)
         {
-            string imageName = DateTime.Now.ToString("yyyyMMddHHmmss") + ".jpg";
             string imagePath = Param.basePath + "\\Images\\" + imageName;
-
             CSaveImgToFileParam stSaveFileParam = new CSaveImgToFileParam()
             {
                 ImageType = MV_SAVE_IAMGE_TYPE.MV_IMAGE_JPEG,
@@ -1538,7 +1546,7 @@ namespace MiniSpore
             {
                 return "";
             }
-            return imageName;
+            return imagePath;
         }
 
         /// <summary>
@@ -1550,11 +1558,6 @@ namespace MiniSpore
             {
                 m_bGrabbing = false;
                 m_MyCamera.StopGrabbing();
-            }
-
-            if (m_hReceiveThread != null)
-            {
-                m_hReceiveThread.Join();
             }
             if (m_MyCamera != null)
             {
