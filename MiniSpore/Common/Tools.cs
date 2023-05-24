@@ -94,11 +94,11 @@ namespace MiniSpore.Common
         /// <param name="img"></param>
         /// <param name="imgName"></param>
         /// <returns></returns>
-        public static bool SaveImage(Image img, string imgName)
+        public static string SaveImage(Image img, string imgName)
         {
             try
             {
-                string path = Param.basePath + "\\GrabImg\\";
+                string path = Param.basePath + "\\Images\\";
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);
@@ -111,15 +111,14 @@ namespace MiniSpore.Common
                         File.Delete(path);
                     }
                     img.Save(path, System.Drawing.Imaging.ImageFormat.Jpeg);
-                    return true;
+                    return path;
                 }
-                return false;
+                return "";
             }
             catch (Exception ex)
             {
-                DebOutPut.DebLog(ex.ToString());
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "保存图片失败！" + ex.ToString());
-                return false;
+                return "";
             }
 
         }

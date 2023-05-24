@@ -5,7 +5,6 @@ using Emgu.CV.Util;
 using MiniSpore.Common;
 using MiniSpore.Model;
 using MvCamCtrl.NET;
-using MvCamCtrl.NET.CameraParams;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Resources;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,17 +48,23 @@ namespace MiniSpore
         //串口通讯
         SerialPortCtrl serialPortCtrl = new SerialPortCtrl();
         private static Object BufForDriverLock = new Object();
-        CImage m_pcImgForDriver;        // 图像信息
         #region 相机对象
-        private CCamera m_MyCamera = null;//相机对象
-        ComboBox cbDeviceList = new ComboBox();//设备列表
-        List<CCameraInfo> m_ltDeviceList = new List<CCameraInfo>();
+        private MyCamera m_pMyCamera = null;//相机对象
+        ComboBox cbDeviceList = new ComboBox();
+        MyCamera.MV_CC_DEVICE_INFO_LIST m_pDeviceList;
         bool m_bGrabbing = false;//是否采集
+        UInt32 m_nBufSizeForDriver = 3072 * 2048 * 3;
+        byte[] m_pBufForDriver = new byte[3072 * 2048 * 3];
+        UInt32 m_nBufSizeForSaveImage = 3072 * 2048 * 3 * 3 + 2048;
+        byte[] m_pBufForSaveImage = new byte[3072 * 2048 * 3 * 3 + 2048];
+        #endregion
+
         bool isReceiveBluetooth = false;//是否接收蓝牙数据
         bool isBand = true;//载玻带是否正常
         bool isX1 = false;
         bool isX2 = false;
-        #endregion
+
+
 
         //传输图像是否完成
         private bool isTransferImage = false;
@@ -483,16 +489,16 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
                 errorMessage = "";
-                if (!isBand)
-                {
-                    errorMessage = "载玻带异常";
-                    return;
-                }
-                if (step == 1 && !isX1)
-                {
-                    errorMessage = "限位X1异常";
-                    return;
-                }
+                //if (!isBand)
+                //{
+                //    errorMessage = "载玻带异常";
+                //    return;
+                //}
+                //if (step == 1 && !isX1)
+                //{
+                //    errorMessage = "限位X1异常";
+                //    return;
+                //}
                 Timer1Stop();
                 //当前流程
                 setProcess();
@@ -502,7 +508,7 @@ namespace MiniSpore
                 {
                     case 0:
                         //初始化
-                        Initialize(); 
+                        Initialize();
                         break;
                     case 1:
                         //采集孢子
@@ -514,7 +520,7 @@ namespace MiniSpore
                         break;
                     case 3:
                         //上传数据
-                        UploadData(); 
+                        UploadData();
                         break;
                     case 4:
                         //流程结束-更新执行指令
@@ -672,7 +678,8 @@ namespace MiniSpore
                 if (step == 2)
                 {
                     errorMessage = "";
-                    if (m_MyCamera == null || !m_MyCamera.IsDeviceConnected())
+
+                    if (m_pMyCamera == null || !m_pMyCamera.MV_CC_IsDeviceConnected_NET())
                     {
                         if (!SearchDev())
                         {
@@ -762,33 +769,33 @@ namespace MiniSpore
             byte[] res = null;
             //关闭补光灯
             res = OperaCommand(0x95, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //关闭吸风
             res = OperaCommand(0x94, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //相机到初始位置(X1)
             res = OperaCommand(0x30, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             //拉出载玻带（顺时针）
             int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
             res = OperaCommand(0x11, runSteps);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
+            //if (res == null)
+            //{
+            //    errorMessage = "主串口通讯异常";
+            //    return;
+            //}
             Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
             Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
 
@@ -818,51 +825,56 @@ namespace MiniSpore
             while (!isStart)
             {
                 isStart = StartCollection(ref errorMessage);
-                Thread.Sleep(5 * 1000);
+                Thread.Sleep(2000);
             }
             //打开补光灯
             OperaCommand(0x92, 800);
             int photoStepNumber = photoStep;
-            Thread.Sleep(2000);
             //对焦（从限位X1开始直到限位X2，采集到合适图像及终止，如果直到限位X2都采集不到合适图像及终止）
+            int focusCount = 0;
             while (!isX2)
             {
                 int imageCount = 0;
                 //移动轴二对焦
                 OperaCommand(0x31, photoStepNumber);
-                Thread.Sleep(1000);
-                CFrameout pcFrameInfo = new CFrameout();
-                int nRet = m_MyCamera.GetImageBuffer(ref pcFrameInfo, 1000);
-                if (nRet == CErrorDefine.MV_OK)
+                Thread.Sleep(2000);
+                DateTime currTime = DateTime.Now;
+                Image image = GetPhoto();
+                string imageName = currTime.ToString("yyyyMMddHHmmss") + ".jpg";
+                string imagePath = Tools.SaveImage(image, imageName);
+                if (string.IsNullOrEmpty(imagePath))
                 {
-                    m_pcImgForDriver = pcFrameInfo.Image;
-                    DateTime currTime = DateTime.Now;
-                    string imageName = currTime.ToString("yyyyMMddHHmmss") + ".jpg";
-                    string imagePath = SaveImage(imageName);
-                    //分析图像
-                    if (!ImageAnalysis(imagePath))
+                    photoStepNumber += photoStep;
+                    continue;
+                }
+                //分析图像
+                if (!ImageAnalysis(imagePath))
+                {
+                    Thread.Sleep(1000);
+                    File.Delete(imagePath);
+                }
+                else
+                {
+                    string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
+                    SQLiteParameter[] parameters =
                     {
-                        Thread.Sleep(2000);
-                        File.Delete(imagePath);
-                    }
-                    else
-                    {
-                        string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
-                        SQLiteParameter[] parameters =
-                        {
                             new SQLiteParameter("@CollectTime", DbType.String)
                         };
-                        parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
-                        SQLiteHelper.ExecuteNonQuery(sql, parameters);
-                        imageCount++;
-                    }
+                    parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                    imageCount++;
                 }
 
-                photoStepNumber += photoStep;
+                focusCount++;
+                this.Invoke(new EventHandler(delegate
+                {
+                    lblMessage.Text = string.Format("相机第{0}次对焦", focusCount);
+                }));
                 if (imageCount >= 3)
                 {
                     break;
                 }
+                photoStepNumber += photoStep;
             }
 
             step = 3;
@@ -1315,49 +1327,53 @@ namespace MiniSpore
         {
             try
             {
+                int nRet;
+                // ch:创建设备列表 en:Create Device List
                 cbDeviceList.Items.Clear();
-                m_ltDeviceList.Clear();
-                int nRet = CSystem.EnumDevices(CSystem.MV_GIGE_DEVICE | CSystem.MV_USB_DEVICE, ref m_ltDeviceList);
+                nRet = MyCamera.MV_CC_EnumDevices_NET(MyCamera.MV_GIGE_DEVICE | MyCamera.MV_USB_DEVICE, ref m_pDeviceList);
                 if (0 != nRet)
                 {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未检索到相机，nRet：" + nRet);
                     return false;
                 }
-                // ch:在窗体列表中显示设备名 | en:Display device name in the form list
-                for (int i = 0; i < m_ltDeviceList.Count; i++)
-                {
-                    if (m_ltDeviceList[i].nTLayerType == CSystem.MV_GIGE_DEVICE)
-                    {
-                        CGigECameraInfo gigeInfo = (CGigECameraInfo)m_ltDeviceList[i];
 
-                        if (gigeInfo.UserDefinedName != "")
+                // ch:在窗体列表中显示设备名 | en:Display device name in the form list
+                for (int i = 0; i < m_pDeviceList.nDeviceNum; i++)
+                {
+                    MyCamera.MV_CC_DEVICE_INFO device = (MyCamera.MV_CC_DEVICE_INFO)Marshal.PtrToStructure(m_pDeviceList.pDeviceInfo[i], typeof(MyCamera.MV_CC_DEVICE_INFO));
+                    if (device.nTLayerType == MyCamera.MV_GIGE_DEVICE)
+                    {
+                        IntPtr buffer = Marshal.UnsafeAddrOfPinnedArrayElement(device.SpecialInfo.stGigEInfo, 0);
+                        MyCamera.MV_GIGE_DEVICE_INFO gigeInfo = (MyCamera.MV_GIGE_DEVICE_INFO)Marshal.PtrToStructure(buffer, typeof(MyCamera.MV_GIGE_DEVICE_INFO));
+                        if (gigeInfo.chUserDefinedName != "")
                         {
-                            cbDeviceList.Items.Add("GEV: " + gigeInfo.UserDefinedName + " (" + gigeInfo.chSerialNumber + ")");
+                            cbDeviceList.Items.Add("GigE: " + gigeInfo.chUserDefinedName + " (" + gigeInfo.chSerialNumber + ")");
                         }
                         else
                         {
-                            cbDeviceList.Items.Add("GEV: " + gigeInfo.chManufacturerName + " " + gigeInfo.chModelName + " (" + gigeInfo.chSerialNumber + ")");
+                            cbDeviceList.Items.Add("GigE: " + gigeInfo.chManufacturerName + " " + gigeInfo.chModelName + " (" + gigeInfo.chSerialNumber + ")");
                         }
                     }
-                    else if (m_ltDeviceList[i].nTLayerType == CSystem.MV_USB_DEVICE)
+                    else if (device.nTLayerType == MyCamera.MV_USB_DEVICE)
                     {
-                        CUSBCameraInfo usbInfo = (CUSBCameraInfo)m_ltDeviceList[i];
-                        if (usbInfo.UserDefinedName != "")
+                        IntPtr buffer = Marshal.UnsafeAddrOfPinnedArrayElement(device.SpecialInfo.stUsb3VInfo, 0);
+                        MyCamera.MV_USB3_DEVICE_INFO usbInfo = (MyCamera.MV_USB3_DEVICE_INFO)Marshal.PtrToStructure(buffer, typeof(MyCamera.MV_USB3_DEVICE_INFO));
+                        if (usbInfo.chUserDefinedName != "")
                         {
-                            cbDeviceList.Items.Add("U3V: " + usbInfo.UserDefinedName + " (" + usbInfo.chSerialNumber + ")");
+                            cbDeviceList.Items.Add("USB: " + usbInfo.chUserDefinedName + " (" + usbInfo.chSerialNumber + ")");
                         }
                         else
                         {
-                            cbDeviceList.Items.Add("U3V: " + usbInfo.chManufacturerName + " " + usbInfo.chModelName + " (" + usbInfo.chSerialNumber + ")");
+                            cbDeviceList.Items.Add("USB: " + usbInfo.chManufacturerName + " " + usbInfo.chModelName + " (" + usbInfo.chSerialNumber + ")");
                         }
                     }
                 }
 
                 // ch:选择第一项 | en:Select the first item
-                if (m_ltDeviceList.Count == 0)
+                if (m_pDeviceList.nDeviceNum != 0)
                 {
-                    return false;
+                    cbDeviceList.SelectedIndex = 0;
                 }
-                cbDeviceList.SelectedIndex = 0;
                 return true;
             }
             catch (Exception ex)
@@ -1374,58 +1390,68 @@ namespace MiniSpore
         {
             try
             {
-                if (m_ltDeviceList.Count == 0 || cbDeviceList.SelectedIndex == -1)
+                if (m_pDeviceList.nDeviceNum == 0 || cbDeviceList.SelectedIndex == -1)
                 {
-                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "未检索到相机");
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "未检索到相机！");
                     return false;
                 }
-
+                int nRet = -1;
                 // ch:获取选择的设备信息 | en:Get selected device information
-                CCameraInfo device = m_ltDeviceList[cbDeviceList.SelectedIndex];
+                MyCamera.MV_CC_DEVICE_INFO device =
+                    (MyCamera.MV_CC_DEVICE_INFO)Marshal.PtrToStructure(m_pDeviceList.pDeviceInfo[cbDeviceList.SelectedIndex],
+                                                                  typeof(MyCamera.MV_CC_DEVICE_INFO));
+
                 // ch:打开设备 | en:Open device
-                if (null == m_MyCamera)
+                if (null == m_pMyCamera)
                 {
-                    m_MyCamera = new CCamera();
-                    if (null == m_MyCamera)
+                    m_pMyCamera = new MyCamera();
+                    if (null == m_pMyCamera)
                     {
+                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "创建相机对象失败!");
                         return false;
                     }
                 }
 
-                int nRet = m_MyCamera.CreateHandle(ref device);
-                if (CErrorDefine.MV_OK != nRet)
+                nRet = m_pMyCamera.MV_CC_CreateDevice_NET(ref device);
+                if (MyCamera.MV_OK != nRet)
                 {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "创建设备对象失败，nRet：" + nRet);
+                    m_pMyCamera = null;
                     return false;
                 }
 
-                nRet = m_MyCamera.OpenDevice();
-                if (CErrorDefine.MV_OK != nRet)
+                nRet = m_pMyCamera.MV_CC_OpenDevice_NET();
+                if (MyCamera.MV_OK != nRet)
                 {
-                    m_MyCamera.DestroyHandle();
+                    m_pMyCamera.MV_CC_DestroyDevice_NET();
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机启动失败，nRet：" + nRet);
+                    m_pMyCamera = null;
                     return false;
                 }
 
                 // ch:探测网络最佳包大小(只对GigE相机有效) | en:Detection network optimal package size(It only works for the GigE camera)
-                if (device.nTLayerType == CSystem.MV_GIGE_DEVICE)
+                if (device.nTLayerType == MyCamera.MV_GIGE_DEVICE)
                 {
-                    int nPacketSize = m_MyCamera.GIGE_GetOptimalPacketSize();
+                    int nPacketSize = m_pMyCamera.MV_CC_GetOptimalPacketSize_NET();
                     if (nPacketSize > 0)
                     {
-                        nRet = m_MyCamera.SetIntValue("GevSCPSPacketSize", (uint)nPacketSize);
-                        if (nRet != CErrorDefine.MV_OK)
+                        nRet = m_pMyCamera.MV_CC_SetIntValue_NET("GevSCPSPacketSize", (uint)nPacketSize);
+                        if (nRet != MyCamera.MV_OK)
                         {
-                            DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "设置网络最佳包大小失败：" + nRet);
+                            DebOutPut.DebLog("警告：设置数据包大小失败，nRet：" + nRet);
+                            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "警告：设置数据包大小失败，nRet：" + nRet);
                         }
                     }
                     else
                     {
-                        DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "获取网络最佳包大小失败：" + nPacketSize);
+                        DebOutPut.DebLog("警告：获取数据包大小失败，nRet：" + nRet);
+                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "警告：获取数据包大小失败，nRet：" + nRet);
                     }
                 }
 
                 // ch:设置采集连续模式 | en:Set Continues Aquisition Mode
-                m_MyCamera.SetEnumValue("AcquisitionMode", (uint)MV_CAM_ACQUISITION_MODE.MV_ACQ_MODE_CONTINUOUS);
-                m_MyCamera.SetEnumValue("TriggerMode", (uint)MV_CAM_TRIGGER_MODE.MV_TRIGGER_MODE_OFF);
+                m_pMyCamera.MV_CC_SetEnumValue_NET("AcquisitionMode", (uint)MyCamera.MV_CAM_ACQUISITION_MODE.MV_ACQ_MODE_CONTINUOUS);
+                m_pMyCamera.MV_CC_SetEnumValue_NET("TriggerMode", (uint)MyCamera.MV_CAM_TRIGGER_MODE.MV_TRIGGER_MODE_OFF);
                 return true;
             }
             catch (Exception ex)
@@ -1433,7 +1459,6 @@ namespace MiniSpore
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "OpenDev异常：" + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1444,15 +1469,15 @@ namespace MiniSpore
             string message = "";
             try
             {
-                if (m_MyCamera == null || !m_MyCamera.IsDeviceConnected())
+                if (m_pMyCamera == null || !m_pMyCamera.MV_CC_IsDeviceConnected_NET())
                 {
                     return false;
                 }
 
                 int nRet = -1;
                 // ch:开始采集 | en:Start Grabbing
-                nRet = m_MyCamera.StartGrabbing();
-                if (CErrorDefine.MV_OK != nRet)
+                nRet = m_pMyCamera.MV_CC_StartGrabbing_NET();
+                if (MyCamera.MV_OK != nRet)
                 {
                     message = "相机开启采集失败，nRet：" + nRet;
                     DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, message);
@@ -1472,6 +1497,86 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 获取图像信息
+        /// </summary>
+        /// <returns></returns>
+        private Image GetPhoto()
+        {
+            try
+            {
+                if (m_pMyCamera == null)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机对象为空");
+                    return null;
+                }
+                int nRet;
+                UInt32 nPayloadSize = 0;
+                MyCamera.MVCC_INTVALUE stParam = new MyCamera.MVCC_INTVALUE();
+                nRet = m_pMyCamera.MV_CC_GetIntValue_NET("PayloadSize", ref stParam);
+                if (MyCamera.MV_OK != nRet)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "获取PayloadSize失败，nRet：" + nRet);
+                    return null;
+                }
+                nPayloadSize = stParam.nCurValue;
+                if (nPayloadSize > m_nBufSizeForDriver)
+                {
+                    m_nBufSizeForDriver = nPayloadSize;
+                    m_pBufForDriver = new byte[m_nBufSizeForDriver];
+
+                    // ch:同时对保存图像的缓存做大小判断处理 | en:Determine the buffer size to save image
+                    // ch:BMP图片大小：width * height * 3 + 2048(预留BMP头大小) | en:BMP image size: width * height * 3 + 2048 (Reserved for BMP header)
+                    m_nBufSizeForSaveImage = m_nBufSizeForDriver * 3 + 2048;
+                    m_pBufForSaveImage = new byte[m_nBufSizeForSaveImage];
+                }
+
+                IntPtr pData = Marshal.UnsafeAddrOfPinnedArrayElement(m_pBufForDriver, 0);
+                MyCamera.MV_FRAME_OUT_INFO_EX stFrameInfo = new MyCamera.MV_FRAME_OUT_INFO_EX();
+
+                // ch:超时获取一帧，超时时间为1秒 | en:Get one frame timeout, timeout is 1 sec
+                //连续取两帧图像，取第二帧图像作为图片
+                int count = 0;
+                while (count < 2)
+                {
+                    nRet = m_pMyCamera.MV_CC_GetOneFrameTimeout_NET(pData, m_nBufSizeForDriver, ref stFrameInfo, 1000);
+                    if (MyCamera.MV_OK != nRet)
+                    {
+                        DebOutPut.DebLog("无数据，nRet：" + nRet);
+                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "无数据，nRet：" + nRet);
+                        return null;
+                    }
+                    count++;
+                }
+                IntPtr pImage = Marshal.UnsafeAddrOfPinnedArrayElement(m_pBufForSaveImage, 0);
+
+                MyCamera.MV_SAVE_IMAGE_PARAM_EX stSaveParam = new MyCamera.MV_SAVE_IMAGE_PARAM_EX();
+                stSaveParam.enImageType = MyCamera.MV_SAVE_IAMGE_TYPE.MV_Image_Jpeg;
+                stSaveParam.enPixelType = stFrameInfo.enPixelType;
+                stSaveParam.pData = pData;
+                stSaveParam.nDataLen = stFrameInfo.nFrameLen;
+                stSaveParam.nHeight = stFrameInfo.nHeight;
+                stSaveParam.nWidth = stFrameInfo.nWidth;
+                stSaveParam.pImageBuffer = pImage;
+                stSaveParam.nBufferSize = m_nBufSizeForSaveImage;
+                stSaveParam.nJpgQuality = 80;
+                nRet = m_pMyCamera.MV_CC_SaveImageEx_NET(ref stSaveParam);
+                if (MyCamera.MV_OK != nRet)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "保存失败，nRet：" + nRet);
+                    return null;
+                }
+                MemoryStream ms = new MemoryStream(m_pBufForSaveImage);
+                Image realTimeImage = Bitmap.FromStream(ms, true);
+                return realTimeImage;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "保存失败!  " + ex.ToString());
+                return null;
+            }
+
+        }
         /// <summary>
         /// 图像分析
         /// </summary>
@@ -1529,30 +1634,6 @@ namespace MiniSpore
         }
 
         /// <summary>
-        /// 保存图像
-        /// </summary>
-        /// <returns></returns>
-        private string SaveImage(string imageName)
-        {
-            string imagePath = Param.basePath + "\\Images\\" + imageName;
-            CSaveImgToFileParam stSaveFileParam = new CSaveImgToFileParam()
-            {
-                ImageType = MV_SAVE_IAMGE_TYPE.MV_IMAGE_JPEG,
-                Image = m_pcImgForDriver,
-                Quality = 80,
-                MethodValue = 2,
-                ImagePath = imagePath
-            };
-
-            int nRet = m_MyCamera.SaveImageToFile(ref stSaveFileParam);
-            if (CErrorDefine.MV_OK != nRet)
-            {
-                return "";
-            }
-            return imagePath;
-        }
-
-        /// <summary>
         /// 关闭相机
         /// </summary>
         private void CameraClose()
@@ -1560,13 +1641,13 @@ namespace MiniSpore
             if (m_bGrabbing)
             {
                 m_bGrabbing = false;
-                m_MyCamera.StopGrabbing();
+                m_pMyCamera.MV_CC_StopGrabbing_NET();
             }
-            if (m_MyCamera != null)
+            if (m_pMyCamera != null)
             {
-                m_MyCamera.CloseDevice();
-                m_MyCamera.DestroyHandle();
-                m_MyCamera = null;
+                m_pMyCamera.MV_CC_CloseDevice_NET();
+                m_pMyCamera.MV_CC_DestroyDevice_NET();
+                m_pMyCamera = null;
             }
         }
 
@@ -1702,6 +1783,7 @@ namespace MiniSpore
 
         //窗口移动
         Point mPoint;
+
         private void panelTitle_MouseDown(object sender, MouseEventArgs e)
         {
             mPoint = new Point(e.X, e.Y);
