@@ -32,6 +32,7 @@ namespace MiniSpore.Common
 
         [DllImport("wininet.dll")]
         public extern static bool InternetGetConnectedState(out int Flag, int ReservedValue);
+
     }
 
     /// <summary>

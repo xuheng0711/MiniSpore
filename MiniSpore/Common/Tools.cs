@@ -346,17 +346,6 @@ namespace MiniSpore.Common
             return username;
         }
 
-        public static double GetCPUTemperature()
-        {
-            double cpuTemperature = 0;
-            ManagementObjectSearcher mos = new ManagementObjectSearcher(@"root\WMI", "Select * From MSAcpi_ThermalZoneTemperature");
-            foreach (System.Management.ManagementObject mo in mos.Get())
-            {
-                cpuTemperature = Convert.ToDouble(Convert.ToDouble(mo.GetPropertyValue("CurrentTemperature").ToString()) - 2732) / 10;
-            }
-            return cpuTemperature;
-        }
-
         /// <summary>
         /// 删除文件夹strDir中nDays天以前的文件
         /// </summary>
