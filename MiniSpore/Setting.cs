@@ -33,7 +33,6 @@ namespace MiniSpore
         private void readData()
         {
             cbPort.SelectedItem = Param.SerialPort;
-            cbBaudrate.SelectedItem = Param.Baudrate;
             cbBluetoothPort.SelectedItem = Param.BluetoothPort;
             cbGPSPort.SelectedItem = Param.GPSPort;
             int nWorkMode = -1;
@@ -42,6 +41,7 @@ namespace MiniSpore
             tbCollectTime.Text = Param.CollectTime;
             tbCollectHour.Text = Param.WorkHour;
             tbCollectMinute.Text = Param.WorkMinute;
+            tbChooseImageCount.Text = Param.ChooseImageCount;
         }
 
         /// <summary>
@@ -62,23 +62,23 @@ namespace MiniSpore
         private void btnSave_Click(object sender, EventArgs e)
         {
             string strPort = cbPort.SelectedItem + "";
-            string strBaudrate = cbBaudrate.SelectedItem + "";
             string strBluetoothPort = cbBluetoothPort.SelectedItem + "";
             string strGPSPort = cbGPSPort.SelectedItem + "";
             int nWorkMode = cbWorkMode.SelectedIndex;
             string strCollectTime = tbCollectTime.Text.Trim();
             string strCollectHour = tbCollectHour.Text.Trim();
             string strCollectMinute = tbCollectMinute.Text.Trim();
+            string strChooseImageCount = tbChooseImageCount.Text.Trim();
 
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectHour", strCollectHour);
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectMinute", strCollectMinute);
-            if (strPort != Param.SerialPort || strBaudrate != Param.Baudrate || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
+            Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
+            if (strPort != Param.SerialPort || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
             {
                 Param.Set_ConfigParm(Main.configfileName, "Config", "SerialPort", strPort);
                 Param.Set_ConfigParm(Main.configfileName, "Config", "BluetoothPort", strBluetoothPort);
                 Param.Set_ConfigParm(Main.configfileName, "Config", "GPSPort", strGPSPort);
-                Param.Set_ConfigParm(Main.configfileName, "Config", "Baudrate", strBaudrate);
                 Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", nWorkMode.ToString());
                 Param.Set_ConfigParm(Main.configfileName, "Config", "SerialPort", strPort);
                 DialogResult dialogResult = MessageBox.Show("检测到您更改了系统关键性配置，将在系统重启之后生效。点击“确定”将立即重启本程序，点击“取消”请稍后手动重启！", "提示", MessageBoxButtons.OKCancel, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.ServiceNotification);
@@ -92,6 +92,7 @@ namespace MiniSpore
                 Param.CollectTime = strCollectTime;
                 Param.WorkHour = strCollectHour;
                 Param.WorkMinute = strCollectMinute;
+                Param.ChooseImageCount = strChooseImageCount;
                 Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }

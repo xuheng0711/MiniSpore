@@ -547,8 +547,8 @@ namespace MiniSpore
                     if (step == 1)
                     {
                         //初始化一分钟时间
-                        lblMessage.Text = "设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(2), dateNowTime) + " 秒";
-                        if (dateNowTime > executeTime.AddMinutes(2))
+                        lblMessage.Text = "设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(1), dateNowTime) + " 秒";
+                        if (dateNowTime > executeTime.AddMinutes(1))
                         {
                             lblMessage.Text = "无数据";
                             Timer2Stop();
@@ -858,8 +858,8 @@ namespace MiniSpore
                     string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
                     SQLiteParameter[] parameters =
                     {
-                            new SQLiteParameter("@CollectTime", DbType.String)
-                        };
+                        new SQLiteParameter("@CollectTime", DbType.String)
+                    };
                     parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
                     SQLiteHelper.ExecuteNonQuery(sql, parameters);
                     imageCount++;
@@ -870,7 +870,7 @@ namespace MiniSpore
                 {
                     lblMessage.Text = string.Format("相机第{0}次对焦", focusCount);
                 }));
-                if (imageCount >= 3)
+                if (imageCount >= int.Parse(Param.ChooseImageCount))
                 {
                     break;
                 }
@@ -1438,13 +1438,11 @@ namespace MiniSpore
                         nRet = m_pMyCamera.MV_CC_SetIntValue_NET("GevSCPSPacketSize", (uint)nPacketSize);
                         if (nRet != MyCamera.MV_OK)
                         {
-                            DebOutPut.DebLog("警告：设置数据包大小失败，nRet：" + nRet);
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "警告：设置数据包大小失败，nRet：" + nRet);
                         }
                     }
                     else
                     {
-                        DebOutPut.DebLog("警告：获取数据包大小失败，nRet：" + nRet);
                         DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "警告：获取数据包大小失败，nRet：" + nRet);
                     }
                 }
@@ -1555,7 +1553,7 @@ namespace MiniSpore
                 stSaveParam.enPixelType = stFrameInfo.enPixelType;
                 stSaveParam.pData = pData;
                 stSaveParam.nDataLen = stFrameInfo.nFrameLen;
-                stSaveParam.nHeight = stFrameInfo.nHeight;
+                stSaveParam.nHeight = stFrameInfo.nHeight;                                                                                                             
                 stSaveParam.nWidth = stFrameInfo.nWidth;
                 stSaveParam.pImageBuffer = pImage;
                 stSaveParam.nBufferSize = m_nBufSizeForSaveImage;
@@ -1587,7 +1585,6 @@ namespace MiniSpore
             bool isMeet = false;
             try
             {
-
                 //原始图像
                 Mat img = CvInvoke.Imread(path);
                 //灰度化
@@ -1609,7 +1606,7 @@ namespace MiniSpore
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 8000/*过滤掉面积小于3000的*/)
+                    if (are < 4500/*过滤掉面积小于3000的*/)
                     {
                         continue;
                     }
@@ -1620,7 +1617,7 @@ namespace MiniSpore
                 dst.Dispose();
                 gray.Dispose();
                 img.Dispose();
-                if (count > 5)
+                if (count > 0)
                 {
                     isMeet = true;
                 }

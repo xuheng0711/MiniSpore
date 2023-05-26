@@ -30,6 +30,10 @@ namespace MiniSpore
         private void InitializeComponent()
         {
             this.panelMain = new System.Windows.Forms.Panel();
+            this.cbGPSPort = new System.Windows.Forms.ComboBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.cbBluetoothPort = new System.Windows.Forms.ComboBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.tbCollectMinute = new System.Windows.Forms.TextBox();
@@ -41,17 +45,13 @@ namespace MiniSpore
             this.cbWorkMode = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
-            this.cbBaudrate = new System.Windows.Forms.ComboBox();
-            this.label3 = new System.Windows.Forms.Label();
             this.cbPort = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.panelTitle = new System.Windows.Forms.Panel();
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.cbBluetoothPort = new System.Windows.Forms.ComboBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.cbGPSPort = new System.Windows.Forms.ComboBox();
-            this.label11 = new System.Windows.Forms.Label();
+            this.tbChooseImageCount = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.panelMain.SuspendLayout();
             this.panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
@@ -61,6 +61,8 @@ namespace MiniSpore
             // 
             this.panelMain.BackColor = System.Drawing.SystemColors.GradientInactiveCaption;
             this.panelMain.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelMain.Controls.Add(this.tbChooseImageCount);
+            this.panelMain.Controls.Add(this.label3);
             this.panelMain.Controls.Add(this.cbGPSPort);
             this.panelMain.Controls.Add(this.label11);
             this.panelMain.Controls.Add(this.cbBluetoothPort);
@@ -76,8 +78,6 @@ namespace MiniSpore
             this.panelMain.Controls.Add(this.cbWorkMode);
             this.panelMain.Controls.Add(this.label4);
             this.panelMain.Controls.Add(this.btnSave);
-            this.panelMain.Controls.Add(this.cbBaudrate);
-            this.panelMain.Controls.Add(this.label3);
             this.panelMain.Controls.Add(this.cbPort);
             this.panelMain.Controls.Add(this.label2);
             this.panelMain.Controls.Add(this.panelTitle);
@@ -86,6 +86,46 @@ namespace MiniSpore
             this.panelMain.Name = "panelMain";
             this.panelMain.Size = new System.Drawing.Size(579, 292);
             this.panelMain.TabIndex = 0;
+            // 
+            // cbGPSPort
+            // 
+            this.cbGPSPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbGPSPort.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.cbGPSPort.FormattingEnabled = true;
+            this.cbGPSPort.Location = new System.Drawing.Point(376, 77);
+            this.cbGPSPort.Name = "cbGPSPort";
+            this.cbGPSPort.Size = new System.Drawing.Size(85, 28);
+            this.cbGPSPort.TabIndex = 33;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label11.Location = new System.Drawing.Point(272, 82);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(99, 20);
+            this.label11.TabIndex = 32;
+            this.label11.Text = "GPS串口：";
+            // 
+            // cbBluetoothPort
+            // 
+            this.cbBluetoothPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbBluetoothPort.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.cbBluetoothPort.FormattingEnabled = true;
+            this.cbBluetoothPort.Location = new System.Drawing.Point(143, 121);
+            this.cbBluetoothPort.Name = "cbBluetoothPort";
+            this.cbBluetoothPort.Size = new System.Drawing.Size(80, 28);
+            this.cbBluetoothPort.TabIndex = 31;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label10.Location = new System.Drawing.Point(30, 126);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(109, 20);
+            this.label10.TabIndex = 30;
+            this.label10.Text = "蓝牙串口：";
             // 
             // label9
             // 
@@ -200,37 +240,6 @@ namespace MiniSpore
             this.btnSave.UseVisualStyleBackColor = false;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
-            // cbBaudrate
-            // 
-            this.cbBaudrate.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbBaudrate.DropDownWidth = 75;
-            this.cbBaudrate.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbBaudrate.FormattingEnabled = true;
-            this.cbBaudrate.Items.AddRange(new object[] {
-            "9600",
-            "14400",
-            "19200",
-            "38400",
-            "56000",
-            "57600",
-            "115200",
-            "128000",
-            "256000"});
-            this.cbBaudrate.Location = new System.Drawing.Point(376, 77);
-            this.cbBaudrate.Name = "cbBaudrate";
-            this.cbBaudrate.Size = new System.Drawing.Size(85, 28);
-            this.cbBaudrate.TabIndex = 16;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label3.Location = new System.Drawing.Point(283, 82);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(89, 20);
-            this.label3.TabIndex = 15;
-            this.label3.Text = "波特率：";
-            // 
             // cbPort
             // 
             this.cbPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -284,45 +293,23 @@ namespace MiniSpore
             this.label1.TabIndex = 0;
             this.label1.Text = "系统参数配置";
             // 
-            // cbBluetoothPort
+            // tbChooseImageCount
             // 
-            this.cbBluetoothPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbBluetoothPort.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbBluetoothPort.FormattingEnabled = true;
-            this.cbBluetoothPort.Location = new System.Drawing.Point(143, 121);
-            this.cbBluetoothPort.Name = "cbBluetoothPort";
-            this.cbBluetoothPort.Size = new System.Drawing.Size(80, 28);
-            this.cbBluetoothPort.TabIndex = 31;
+            this.tbChooseImageCount.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.tbChooseImageCount.Location = new System.Drawing.Point(376, 121);
+            this.tbChooseImageCount.Name = "tbChooseImageCount";
+            this.tbChooseImageCount.Size = new System.Drawing.Size(86, 30);
+            this.tbChooseImageCount.TabIndex = 35;
             // 
-            // label10
+            // label3
             // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label10.Location = new System.Drawing.Point(30, 126);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(109, 20);
-            this.label10.TabIndex = 30;
-            this.label10.Text = "蓝牙串口：";
-            // 
-            // cbGPSPort
-            // 
-            this.cbGPSPort.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbGPSPort.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbGPSPort.FormattingEnabled = true;
-            this.cbGPSPort.Location = new System.Drawing.Point(376, 121);
-            this.cbGPSPort.Name = "cbGPSPort";
-            this.cbGPSPort.Size = new System.Drawing.Size(85, 28);
-            this.cbGPSPort.TabIndex = 33;
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label11.Location = new System.Drawing.Point(272, 126);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(99, 20);
-            this.label11.TabIndex = 32;
-            this.label11.Text = "GPS串口：";
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label3.Location = new System.Drawing.Point(263, 126);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(109, 20);
+            this.label3.TabIndex = 34;
+            this.label3.Text = "图像数量：";
             // 
             // Setting
             // 
@@ -350,8 +337,6 @@ namespace MiniSpore
         private System.Windows.Forms.Panel panelTitle;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.PictureBox pbClose;
-        private System.Windows.Forms.ComboBox cbBaudrate;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cbPort;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnSave;
@@ -369,5 +354,7 @@ namespace MiniSpore
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.ComboBox cbGPSPort;
         private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.TextBox tbChooseImageCount;
+        private System.Windows.Forms.Label label3;
     }
 }
