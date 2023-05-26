@@ -121,6 +121,7 @@
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
+    <Compile Include="Model\BluetoothModel.cs" />
     <Compile Include="Model\MQTTClientInfo.cs" />
     <Compile Include="Model\ProtocolModel.cs" />
     <Compile Include="Model\MQTTModel.cs" />

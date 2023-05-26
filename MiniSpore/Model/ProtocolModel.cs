@@ -40,6 +40,7 @@ namespace MiniSpore.Model
     {
         public string WorkMode { get; set; }
         public string CollectTime { get; set; }
+        public string ChooseImageCount { get; set; }
         public string WorkHour { get; set; }
         public string WorkMinute { get; set; }
     }

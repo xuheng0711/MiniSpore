@@ -258,7 +258,6 @@ namespace MiniSpore
 
                 if (!string.IsNullOrEmpty(Param.BluetoothPort))
                 {
-
                     if (bluetoothSerialPort.IsOpen)
                     {
                         bluetoothSerialPort.Close();
@@ -425,9 +424,42 @@ namespace MiniSpore
                     isReceiveBluetooth = true;
                 }
                 //执行指令
+                BluetoothModel receiveData = JsonConvert.DeserializeObject<BluetoothModel>(receiveMessage);
+                dealBluetoothData(receiveData.Func, receiveData.Message);
 
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
 
+        /// <summary>
+        /// 处理蓝牙数据
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="data"></param>
+        private void dealBluetoothData(int func, object data)
+        {
+            try
+            {
+                BluetoothModel bluetoothModel = null;
+                switch (func)
+                {
+                    case 200:
+                        //异常信息
+                        bluetoothModel = new BluetoothModel()
+                        {
+                            Func = 200,
+                            Message = errorMessage
+                        };
+                        serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        break;
+                    case 201:
 
+                        break;
+
+                }
             }
             catch (Exception ex)
             {
@@ -1022,7 +1054,8 @@ namespace MiniSpore
                 WorkMode = Param.WorkMode,
                 CollectTime = Param.CollectTime,
                 WorkHour = Param.WorkHour,
-                WorkMinute = Param.WorkMinute
+                WorkMinute = Param.WorkMinute,
+                ChooseImageCount = Param.ChooseImageCount
             };
 
             ProtocolModel model = new ProtocolModel()
@@ -1194,6 +1227,7 @@ namespace MiniSpore
                             Param.Set_ConfigParm(configfileName, "Config", "CollectTime", settingInfo.CollectTime);
                             Param.Set_ConfigParm(configfileName, "Config", "WorkHour", settingInfo.WorkHour);
                             Param.Set_ConfigParm(configfileName, "Config", "WorkMinute", settingInfo.WorkMinute);
+                            Param.Set_ConfigParm(configfileName, "Config", "ChooseImageCount", settingInfo.ChooseImageCount);
                             if (settingInfo.WorkMode != Param.WorkMode)
                             {
                                 Tools.RestStart();
@@ -1202,6 +1236,7 @@ namespace MiniSpore
                             Param.CollectTime = settingInfo.CollectTime;
                             Param.WorkHour = settingInfo.WorkHour;
                             Param.WorkMinute = settingInfo.WorkMinute;
+                            Param.ChooseImageCount = settingInfo.ChooseImageCount;
                             SendCommonMsg(302, "");
                         }
                         break;
@@ -1553,7 +1588,7 @@ namespace MiniSpore
                 stSaveParam.enPixelType = stFrameInfo.enPixelType;
                 stSaveParam.pData = pData;
                 stSaveParam.nDataLen = stFrameInfo.nFrameLen;
-                stSaveParam.nHeight = stFrameInfo.nHeight;                                                                                                             
+                stSaveParam.nHeight = stFrameInfo.nHeight;
                 stSaveParam.nWidth = stFrameInfo.nWidth;
                 stSaveParam.pImageBuffer = pImage;
                 stSaveParam.nBufferSize = m_nBufSizeForSaveImage;
