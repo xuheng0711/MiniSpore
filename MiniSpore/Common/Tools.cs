@@ -189,7 +189,6 @@ namespace MiniSpore.Common
         /// </summary>
         public static void WinRestart()
         {
-            DebOutPut.DebLog("计算机自动重启！");
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "计算机自动重启");
             System.Diagnostics.Process myProcess = new System.Diagnostics.Process();
             myProcess.StartInfo.FileName = "cmd.exe";//启动cmd命令

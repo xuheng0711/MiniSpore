@@ -295,7 +295,7 @@ namespace MiniSpore
                 errorMessage = ex.Message;
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
             }
-            lblError.Text = errorMessage;
+            showMessage(errorMessage,true);
             return isSuccess;
         }
 
@@ -444,6 +444,11 @@ namespace MiniSpore
             try
             {
                 BluetoothModel bluetoothModel = null;
+                DeviceParams deviceParams = null;
+                MotorShaft motorShaft = null;
+                string strServerIP = "";
+                int nServerPort = 0;
+                byte[] res = null;
                 switch (func)
                 {
                     case 200:
@@ -456,10 +461,170 @@ namespace MiniSpore
                         serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                         break;
                     case 201:
+                        int nCommunicateMode = int.Parse(Param.CommunicateMode);
+                        if (nCommunicateMode == 0)//mqtt
+                        {
+                            strServerIP = Param.MQTTServerIP;
+                            nServerPort = int.Parse(Param.MQTTServerPort);
+                        }
+                        else
+                        {
+                            strServerIP = Param.SocketServerIP;
+                            nServerPort = int.Parse(Param.SocketServerPort);
+                        }
+                        deviceParams = new DeviceParams()
+                        {
+                            DeviceID = Param.DeviceID,
+                            CommunicateMode = nCommunicateMode,
+                            ServerIP = strServerIP,
+                            ServerPort = nServerPort,
+                            Action = GetActionNameByStep(),
+                            WorkMode = int.Parse(Param.WorkMode),
+                            CollectTime = int.Parse(Param.CollectTime),
+                            WorkHour = int.Parse(Param.WorkHour),
+                            WorkMinute = int.Parse(Param.WorkMinute),
+                            ChooseImageCount = int.Parse(Param.ChooseImageCount)
+                        };
+                        bluetoothModel = new BluetoothModel()
+                        {
+                            Func = 201,
+                            Message = deviceParams
+                        };
+                        serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        break;
+                    case 202:
+                        deviceParams = JsonConvert.DeserializeObject<DeviceParams>(data + "");
+                        if (deviceParams.CommunicateMode == 0)//mqtt
+                        {
+                            strServerIP = Param.MQTTServerIP;
+                            nServerPort = int.Parse(Param.MQTTServerPort);
+                        }
+                        else
+                        {
+                            strServerIP = Param.SocketServerIP;
+                            nServerPort = int.Parse(Param.SocketServerPort);
+                        }
 
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "DeviceID", deviceParams.DeviceID);
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "CommunicateMode", deviceParams.CommunicateMode + "");
+                        if (deviceParams.CommunicateMode == 0)
+                        {
+                            Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerIP", strServerIP);
+                            Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerPort", nServerPort + "");
+                        }
+                        else
+                        {
+                            Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerIP", strServerIP);
+                            Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerPort", nServerPort + "");
+                        }
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", deviceParams.WorkMode + "");
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", deviceParams.CollectTime + "");
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkHour", deviceParams.WorkHour + "");
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMinute", deviceParams.WorkMinute + "");
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
+
+                        Param.CollectTime = deviceParams.CollectTime + "";
+                        Param.WorkHour = deviceParams.WorkHour + "";
+                        Param.WorkMinute = deviceParams.WorkMinute + "";
+                        Param.ChooseImageCount = deviceParams.ChooseImageCount + "";
+
+                        bluetoothModel = new BluetoothModel()
+                        {
+                            Func = 202,
+                            Message = "success"
+                        };
+                        serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != strServerIP || deviceParams.ServerPort != nServerPort || deviceParams.WorkMode + "" != Param.WorkMode)
+                        {
+                            Tools.RestStart();
+                        }
+                        break;
+
+                    case 300:
+                        //风机控制(0关闭 1打开)
+                        if (data + "" == "1")
+                        {
+                            res = OperaCommand(0x91, 0);
+                        }
+                        else
+                        {
+                            res = OperaCommand(0x94, 0);
+                        }
+                        if (res != null)
+                        {
+                            bluetoothModel = new BluetoothModel()
+                            {
+                                Func = 300,
+                                Message = "success"
+                            };
+                            serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        }
+                        break;
+                    case 301:
+                        motorShaft = JsonConvert.DeserializeObject<MotorShaft>(data + "");
+                        if (motorShaft.Way == 1)
+                        {
+                            res = OperaCommand(0x21, motorShaft.Step);
+                        }
+                        else
+                        {
+                            res = OperaCommand(0x11, motorShaft.Step);
+                        }
+                        if (res != null)
+                        {
+                            bluetoothModel = new BluetoothModel()
+                            {
+                                Func = 301,
+                                Message = "success"
+                            };
+                            serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        }
+                        break;
+                    case 302:
+                        motorShaft = JsonConvert.DeserializeObject<MotorShaft>(data + "");
+                        byte oper = 0x00;
+                        switch (motorShaft.Way)
+                        {
+                            case 0: oper = 0x30; break;
+                            case 1: oper = 0x32; break;
+                            case 2: oper = 0x31; break;
+                            case 3: oper = 0x33; break;
+                        }
+                        res = OperaCommand(oper, motorShaft.Step);
+                        if (res != null)
+                        {
+                            bluetoothModel = new BluetoothModel()
+                            {
+                                Func = 302,
+                                Message = "success"
+                            };
+                            serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        }
+                        break;
+                    case 303:
+                        //风机控制(0关闭 1打开)
+                        if (data + "" == "1")
+                        {
+                            res = OperaCommand(0x92, 0);
+                        }
+                        else
+                        {
+                            res = OperaCommand(0x95, 0);
+                        }
+                        if (res != null)
+                        {
+                            bluetoothModel = new BluetoothModel()
+                            {
+                                Func = 303,
+                                Message = "success"
+                            };
+                            serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                        }
                         break;
 
                 }
+
+
             }
             catch (Exception ex)
             {
@@ -521,16 +686,16 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
                 errorMessage = "";
-                //if (!isBand)
-                //{
-                //    errorMessage = "载玻带异常";
-                //    return;
-                //}
-                //if (step == 1 && !isX1)
-                //{
-                //    errorMessage = "限位X1异常";
-                //    return;
-                //}
+                if (!isBand)
+                {
+                    errorMessage = "载玻带异常";
+                    return;
+                }
+                if (step == 1 && !isX1)
+                {
+                    errorMessage = "限位X1异常";
+                    return;
+                }
                 Timer1Stop();
                 //当前流程
                 setProcess();
@@ -579,10 +744,10 @@ namespace MiniSpore
                     if (step == 1)
                     {
                         //初始化一分钟时间
-                        lblMessage.Text = "设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(1), dateNowTime) + " 秒";
+                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(1), dateNowTime) + " 秒");
                         if (dateNowTime > executeTime.AddMinutes(1))
                         {
-                            lblMessage.Text = "无数据";
+                            showMessage("无数据");
                             Timer2Stop();
                             Timer1Start();
                         }
@@ -591,10 +756,10 @@ namespace MiniSpore
                     {
                         //吸风时长
                         int nCollectTime = int.Parse(Param.CollectTime);
-                        lblMessage.Text = "收集时间倒计时:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(nCollectTime), dateNowTime) + " 秒";
+                        showMessage("收集时间倒计时:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(nCollectTime), dateNowTime) + " 秒");
                         if (dateNowTime > executeTime.AddMinutes(nCollectTime))
                         {
-                            lblMessage.Text = "无数据";
+                            showMessage("无数据");
                             OperaCommand(0x94, 0);
                             Timer1Start();
                             Timer2Stop();
@@ -709,8 +874,7 @@ namespace MiniSpore
                 //相机搜索
                 if (step == 2)
                 {
-                    errorMessage = "";
-
+                    //errorMessage = "";
                     if (m_pMyCamera == null || !m_pMyCamera.MV_CC_IsDeviceConnected_NET())
                     {
                         if (!SearchDev())
@@ -730,12 +894,7 @@ namespace MiniSpore
                         }
                     }
                 }
-
-                this.Invoke(new EventHandler(delegate
-                {
-                    lblError.Text = errorMessage;
-                }));
-
+                showMessage(errorMessage,true);
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -801,33 +960,33 @@ namespace MiniSpore
             byte[] res = null;
             //关闭补光灯
             res = OperaCommand(0x95, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //关闭吸风
             res = OperaCommand(0x94, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //相机到初始位置(X1)
             res = OperaCommand(0x30, 0);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //拉出载玻带（顺时针）
             int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
             res = OperaCommand(0x11, runSteps);
-            //if (res == null)
-            //{
-            //    errorMessage = "主串口通讯异常";
-            //    return;
-            //}
+            if (res == null) 
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
             Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
 
@@ -861,6 +1020,8 @@ namespace MiniSpore
             }
             //打开补光灯
             OperaCommand(0x92, 800);
+            //开风扇
+            OperaCommand(0x93, 0);
             int photoStepNumber = photoStep;
             //对焦（从限位X1开始直到限位X2，采集到合适图像及终止，如果直到限位X2都采集不到合适图像及终止）
             int focusCount = 0;
@@ -898,10 +1059,7 @@ namespace MiniSpore
                 }
 
                 focusCount++;
-                this.Invoke(new EventHandler(delegate
-                {
-                    lblMessage.Text = string.Format("相机第{0}次对焦", focusCount);
-                }));
+                showMessage(string.Format("相机第{0}次对焦", focusCount));
                 if (imageCount >= int.Parse(Param.ChooseImageCount))
                 {
                     break;
@@ -911,6 +1069,10 @@ namespace MiniSpore
 
             step = 3;
             CameraClose();
+            //关闭补光灯
+            OperaCommand(0x95, 0);
+            //关闭风扇
+            OperaCommand(0x96, 0);
             Timer1Start();
         }
 
@@ -940,6 +1102,7 @@ namespace MiniSpore
                     continue;
                 }
                 //传输图像
+
                 bool bIsSuccess = SendPictureMsg(strCollectTime, imagePath);
                 if (!bIsSuccess)
                 {
@@ -1014,20 +1177,13 @@ namespace MiniSpore
         /// </summary>
         private void SendCurrAction()
         {
-            string currAction = "";
-            switch (step)
-            {
-                case 0: currAction = "初始化"; break;
-                case 1: currAction = "收集"; break;
-                case 2: currAction = "拍照"; break;
-                case 3: currAction = "上传数据"; break;
-            }
+
             ProtocolModel model = new ProtocolModel()
             {
                 func = 200,
                 devId = Param.DeviceID,
                 err = "",
-                message = currAction
+                message = GetActionNameByStep()
             };
 
             string jsonData = JsonConvert.SerializeObject(model);
@@ -1043,6 +1199,22 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 获取流程名称
+        /// </summary>
+        /// <returns></returns>
+        private string GetActionNameByStep()
+        {
+            string currAction = "";
+            switch (step)
+            {
+                case 0: currAction = "初始化"; break;
+                case 1: currAction = "收集"; break;
+                case 2: currAction = "拍照"; break;
+                case 3: currAction = "上传数据"; break;
+            }
+            return currAction;
+        }
         /// <summary>
         /// 获取设置信息
         /// </summary>
@@ -1575,7 +1747,6 @@ namespace MiniSpore
                     nRet = m_pMyCamera.MV_CC_GetOneFrameTimeout_NET(pData, m_nBufSizeForDriver, ref stFrameInfo, 1000);
                     if (MyCamera.MV_OK != nRet)
                     {
-                        DebOutPut.DebLog("无数据，nRet：" + nRet);
                         DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "无数据，nRet：" + nRet);
                         return null;
                     }
@@ -1627,7 +1798,7 @@ namespace MiniSpore
                 CvInvoke.CvtColor(img, gray, ColorConversion.Bgr2Gray);
                 //大津法局部阀值二值化
                 Mat dst = new Mat();
-                CvInvoke.AdaptiveThreshold(gray, dst, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 101, -1);
+                CvInvoke.AdaptiveThreshold(gray, dst, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 85, -1);
                 //指定参数获得结构元素 形态学闭运算去噪
                 Mat element = CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(9, 9), new Point(3, 3));
                 CvInvoke.MorphologyEx(dst, dst, MorphOp.Open, element, new Point(1, 1), 1, BorderType.Default, new MCvScalar(255, 0, 0, 255));
@@ -1641,7 +1812,7 @@ namespace MiniSpore
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 4500/*过滤掉面积小于3000的*/)
+                    if (are < 4500/*过滤掉面积小于4500的*/)
                     {
                         continue;
                     }
@@ -1755,7 +1926,6 @@ namespace MiniSpore
                     }
                     else
                     {
-
                         if (message.Length > 15)
                         {
                             message = message.Substring(0, 15) + "\r\n" + message.Substring(15);
@@ -1836,11 +2006,7 @@ namespace MiniSpore
         private void pbSetting_Click(object sender, EventArgs e)
         {
             Setting setting = new Setting();
-            DialogResult dialogResult = setting.ShowDialog();
-            if (dialogResult == DialogResult.Yes)
-            {
-
-            }
+            setting.ShowDialog();
         }
 
 
