@@ -877,7 +877,7 @@ namespace MiniSpore
                 }
 
                 //相机搜索
-                if (step == 2)
+                if (step <= 2)
                 {
                     //errorMessage = "";
                     if (m_pMyCamera == null || !m_pMyCamera.MV_CC_IsDeviceConnected_NET())
