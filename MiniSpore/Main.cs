@@ -811,7 +811,11 @@ namespace MiniSpore
                             if (nCurrTime > nRunTime)
                             {
                                 //强制执行
-                                lblWorkMode.Text = "当前运行模式_强制运行";
+                                this.Invoke(new EventHandler(delegate
+                                {
+                                    lblWorkMode.Text = "当前运行模式_强制运行";
+                                }));
+                                step = 0;
                                 Timer1Start();
                                 Timer3Stop();
                             }
@@ -834,6 +838,7 @@ namespace MiniSpore
                             taskParams[1].Value = currTime.Hour;
                             taskParams[2].Value = currTime.Minute;
                             SQLiteHelper.ExecuteNonQuery(sql, taskParams);
+                            step = 0;
                             Timer1Start();
                             Timer3Stop();
                         }
