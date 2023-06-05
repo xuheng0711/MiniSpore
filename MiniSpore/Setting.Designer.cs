@@ -30,14 +30,16 @@ namespace MiniSpore
         private void InitializeComponent()
         {
             this.panelMain = new System.Windows.Forms.Panel();
+            this.tbChooseImageCount = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.cbGPSPort = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
             this.cbBluetoothPort = new System.Windows.Forms.ComboBox();
             this.label10 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.tbCollectMinute = new System.Windows.Forms.TextBox();
-            this.tbCollectHour = new System.Windows.Forms.TextBox();
+            this.tbWorkMinute = new System.Windows.Forms.TextBox();
+            this.tbWorkHour = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.tbCollectTime = new System.Windows.Forms.TextBox();
@@ -50,8 +52,6 @@ namespace MiniSpore
             this.panelTitle = new System.Windows.Forms.Panel();
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.tbChooseImageCount = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
             this.panelMain.SuspendLayout();
             this.panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
@@ -69,8 +69,8 @@ namespace MiniSpore
             this.panelMain.Controls.Add(this.label10);
             this.panelMain.Controls.Add(this.label9);
             this.panelMain.Controls.Add(this.label8);
-            this.panelMain.Controls.Add(this.tbCollectMinute);
-            this.panelMain.Controls.Add(this.tbCollectHour);
+            this.panelMain.Controls.Add(this.tbWorkMinute);
+            this.panelMain.Controls.Add(this.tbWorkHour);
             this.panelMain.Controls.Add(this.label7);
             this.panelMain.Controls.Add(this.label6);
             this.panelMain.Controls.Add(this.tbCollectTime);
@@ -86,6 +86,24 @@ namespace MiniSpore
             this.panelMain.Name = "panelMain";
             this.panelMain.Size = new System.Drawing.Size(579, 292);
             this.panelMain.TabIndex = 0;
+            // 
+            // tbChooseImageCount
+            // 
+            this.tbChooseImageCount.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.tbChooseImageCount.Location = new System.Drawing.Point(376, 121);
+            this.tbChooseImageCount.Name = "tbChooseImageCount";
+            this.tbChooseImageCount.Size = new System.Drawing.Size(86, 30);
+            this.tbChooseImageCount.TabIndex = 35;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label3.Location = new System.Drawing.Point(263, 126);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(109, 20);
+            this.label3.TabIndex = 34;
+            this.label3.Text = "图像数量：";
             // 
             // cbGPSPort
             // 
@@ -147,21 +165,21 @@ namespace MiniSpore
             this.label8.TabIndex = 28;
             this.label8.Text = "时";
             // 
-            // tbCollectMinute
+            // tbWorkMinute
             // 
-            this.tbCollectMinute.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.tbCollectMinute.Location = new System.Drawing.Point(268, 210);
-            this.tbCollectMinute.Name = "tbCollectMinute";
-            this.tbCollectMinute.Size = new System.Drawing.Size(85, 30);
-            this.tbCollectMinute.TabIndex = 27;
+            this.tbWorkMinute.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.tbWorkMinute.Location = new System.Drawing.Point(268, 210);
+            this.tbWorkMinute.Name = "tbWorkMinute";
+            this.tbWorkMinute.Size = new System.Drawing.Size(85, 30);
+            this.tbWorkMinute.TabIndex = 27;
             // 
-            // tbCollectHour
+            // tbWorkHour
             // 
-            this.tbCollectHour.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.tbCollectHour.Location = new System.Drawing.Point(141, 210);
-            this.tbCollectHour.Name = "tbCollectHour";
-            this.tbCollectHour.Size = new System.Drawing.Size(85, 30);
-            this.tbCollectHour.TabIndex = 26;
+            this.tbWorkHour.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.tbWorkHour.Location = new System.Drawing.Point(141, 210);
+            this.tbWorkHour.Name = "tbWorkHour";
+            this.tbWorkHour.Size = new System.Drawing.Size(85, 30);
+            this.tbWorkHour.TabIndex = 26;
             // 
             // label7
             // 
@@ -293,24 +311,6 @@ namespace MiniSpore
             this.label1.TabIndex = 0;
             this.label1.Text = "系统参数配置";
             // 
-            // tbChooseImageCount
-            // 
-            this.tbChooseImageCount.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.tbChooseImageCount.Location = new System.Drawing.Point(376, 121);
-            this.tbChooseImageCount.Name = "tbChooseImageCount";
-            this.tbChooseImageCount.Size = new System.Drawing.Size(86, 30);
-            this.tbChooseImageCount.TabIndex = 35;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label3.Location = new System.Drawing.Point(263, 126);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(109, 20);
-            this.label3.TabIndex = 34;
-            this.label3.Text = "图像数量：";
-            // 
             // Setting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -346,8 +346,8 @@ namespace MiniSpore
         private System.Windows.Forms.TextBox tbCollectTime;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.TextBox tbCollectMinute;
-        private System.Windows.Forms.TextBox tbCollectHour;
+        private System.Windows.Forms.TextBox tbWorkMinute;
+        private System.Windows.Forms.TextBox tbWorkHour;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.ComboBox cbBluetoothPort;

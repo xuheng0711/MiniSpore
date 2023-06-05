@@ -39,8 +39,8 @@ namespace MiniSpore
             int.TryParse(Param.WorkMode, out nWorkMode);
             cbWorkMode.SelectedIndex = nWorkMode;
             tbCollectTime.Text = Param.CollectTime;
-            tbCollectHour.Text = Param.WorkHour;
-            tbCollectMinute.Text = Param.WorkMinute;
+            tbWorkHour.Text = Param.WorkHour;
+            tbWorkMinute.Text = Param.WorkMinute;
             tbChooseImageCount.Text = Param.ChooseImageCount;
         }
 
@@ -66,13 +66,13 @@ namespace MiniSpore
             string strGPSPort = cbGPSPort.SelectedItem + "";
             int nWorkMode = cbWorkMode.SelectedIndex;
             string strCollectTime = tbCollectTime.Text.Trim();
-            string strCollectHour = tbCollectHour.Text.Trim();
-            string strCollectMinute = tbCollectMinute.Text.Trim();
+            string strWorkHour = tbWorkHour.Text.Trim();
+            string strWorkMinute = tbWorkMinute.Text.Trim();
             string strChooseImageCount = tbChooseImageCount.Text.Trim();
 
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "CollectHour", strCollectHour);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "CollectMinute", strCollectMinute);
+            Param.Set_ConfigParm(Main.configfileName, "Config", "WorkHour", strWorkHour);
+            Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMinute", strWorkMinute);
             Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
             if (strPort != Param.SerialPort || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
             {
@@ -90,8 +90,8 @@ namespace MiniSpore
             else
             {
                 Param.CollectTime = strCollectTime;
-                Param.WorkHour = strCollectHour;
-                Param.WorkMinute = strCollectMinute;
+                Param.WorkHour = strWorkHour;
+                Param.WorkMinute = strWorkMinute;
                 Param.ChooseImageCount = strChooseImageCount;
                 Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);

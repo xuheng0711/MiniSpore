@@ -78,6 +78,7 @@ namespace MiniSpore.Common
                 WorkMinute = Read_ConfigParam(configfileName, "Config", "WorkMinute");
                 isWinRestart = Read_ConfigParam(configfileName, "Config", "isWinRestart");
 
+
                 if (CommunicateMode == "0")
                 {
                     HttpRequest httpRequest = new HttpRequest();

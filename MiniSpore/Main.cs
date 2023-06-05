@@ -982,7 +982,7 @@ namespace MiniSpore
             //拉出载玻带（顺时针）
             int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
             res = OperaCommand(0x11, runSteps);
-            if (res == null) 
+            if (res == null)
             {
                 errorMessage = "主串口通讯异常";
                 return;
@@ -1798,7 +1798,7 @@ namespace MiniSpore
                 CvInvoke.CvtColor(img, gray, ColorConversion.Bgr2Gray);
                 //大津法局部阀值二值化
                 Mat dst = new Mat();
-                CvInvoke.AdaptiveThreshold(gray, dst, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 85, -1);
+                CvInvoke.AdaptiveThreshold(gray, dst, 255, AdaptiveThresholdType.GaussianC, ThresholdType.Binary, 81, -1);
                 //指定参数获得结构元素 形态学闭运算去噪
                 Mat element = CvInvoke.GetStructuringElement(Emgu.CV.CvEnum.ElementShape.Rectangle, new Size(9, 9), new Point(3, 3));
                 CvInvoke.MorphologyEx(dst, dst, MorphOp.Open, element, new Point(1, 1), 1, BorderType.Default, new MCvScalar(255, 0, 0, 255));
