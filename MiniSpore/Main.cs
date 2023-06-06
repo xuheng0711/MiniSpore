@@ -39,7 +39,9 @@ namespace MiniSpore
         internal static string configfileName = "Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
         private Image imageProcess = null;
-        //程序锁
+        /// <summary>
+        /// 程序锁
+        /// </summary>
         private static readonly Object locker = new object();
         /// <summary>
         /// 指令程序锁
