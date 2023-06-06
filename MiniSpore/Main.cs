@@ -544,7 +544,7 @@ namespace MiniSpore
                         //风机控制(0关闭 1打开)
                         if (data + "" == "1")
                         {
-                            res = OperaCommand(0x91, 0);
+                            res = OperaCommand(0x91, 800);
                         }
                         else
                         {
@@ -605,7 +605,7 @@ namespace MiniSpore
                         //风机控制(0关闭 1打开)
                         if (data + "" == "1")
                         {
-                            res = OperaCommand(0x92, 0);
+                            res = OperaCommand(0x92, 800);
                         }
                         else
                         {
@@ -743,9 +743,9 @@ namespace MiniSpore
                 {
                     if (step == 1)
                     {
-                        //初始化一分钟时间
-                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddMinutes(1), dateNowTime) + " 秒");
-                        if (dateNowTime > executeTime.AddMinutes(1))
+                        //初始化90秒时间
+                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddSeconds(90), dateNowTime) + " 秒");
+                        if (dateNowTime > executeTime.AddSeconds(90))
                         {
                             showMessage("无数据");
                             Timer2Stop();
