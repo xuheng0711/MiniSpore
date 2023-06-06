@@ -41,6 +41,10 @@ namespace MiniSpore
         private Image imageProcess = null;
         //程序锁
         private static readonly Object locker = new object();
+        /// <summary>
+        /// 指令程序锁
+        /// </summary>
+        private static readonly Object cmdLocker = new object();
         //Socket服务器
         public SocketClient socketClient = null;
         //MQTT服务器
@@ -295,7 +299,7 @@ namespace MiniSpore
                 errorMessage = ex.Message;
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
             }
-            showMessage(errorMessage,true);
+            showMessage(errorMessage, true);
             return isSuccess;
         }
 
@@ -899,7 +903,7 @@ namespace MiniSpore
                         }
                     }
                 }
-                showMessage(errorMessage,true);
+                showMessage(errorMessage, true);
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -1013,7 +1017,12 @@ namespace MiniSpore
         {
             executeTime = DateTime.Now;
             //打开吸风
-            OperaCommand(0x91, 800);
+            byte[] res = OperaCommand(0x91, 800);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             step = 2;
             Timer2Start();
         }
@@ -1873,24 +1882,27 @@ namespace MiniSpore
 
         private byte[] OperaCommand(byte func, int value)
         {
-            try
+            lock (cmdLocker)
             {
-                if (mainSerialPort == null || !mainSerialPort.IsOpen)
+                try
+                {
+                    if (mainSerialPort == null || !mainSerialPort.IsOpen)
+                        return null;
+                    mainSerialPort.DiscardInBuffer();
+                    byte[] cmd = { 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+                    cmd[2] = func;
+                    cmd[3] = (byte)((value >> 24) & 0xFF);
+                    cmd[4] = (byte)((value >> 16) & 0xFF);
+                    cmd[5] = (byte)((value >> 8) & 0xFF);
+                    cmd[6] = (byte)((value >> 0) & 0xFF);
+                    cmd[7] = GetCheckByte(cmd);
+                    return serialPortCtrl.SendCommand(mainSerialPort, cmd);
+                }
+                catch (Exception ex)
+                {
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
                     return null;
-                mainSerialPort.DiscardInBuffer();
-                byte[] cmd = { 0xBB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-                cmd[2] = func;
-                cmd[3] = (byte)((value >> 24) & 0xFF);
-                cmd[4] = (byte)((value >> 16) & 0xFF);
-                cmd[5] = (byte)((value >> 8) & 0xFF);
-                cmd[6] = (byte)((value >> 0) & 0xFF);
-                cmd[7] = GetCheckByte(cmd);
-                return serialPortCtrl.SendCommand(mainSerialPort, cmd);
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return null;
+                }
             }
         }
 

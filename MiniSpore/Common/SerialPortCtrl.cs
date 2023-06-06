@@ -60,21 +60,24 @@ namespace MiniSpore.Common
         /// <param name="Msg">数据</param>
         public void SendMsg(SerialPort serialPort, string Msg)
         {
-            try
+            lock (locker)
             {
-                if (serialPort == null || !serialPort.IsOpen)
+                try
                 {
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "串口未打开!");
-                    return;
+                    if (serialPort == null || !serialPort.IsOpen)
+                    {
+                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "串口未打开!");
+                        return;
+                    }
+                    serialPort.DiscardInBuffer();//清理缓存
+                    Msg += "\r\n";
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Msg);
+                    serialPort.Write(Msg);
                 }
-                serialPort.DiscardInBuffer();//清理缓存
-                Msg += "\r\n";
-                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Msg);
-                serialPort.Write(Msg);
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                catch (Exception ex)
+                {
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                }
             }
         }
 
@@ -86,53 +89,51 @@ namespace MiniSpore.Common
         /// <returns></returns>
         public byte[] SendCommand(SerialPort serialPort, byte[] cmd)
         {
-            lock (locker)
+            try
             {
-                try
+                if (serialPort == null || !serialPort.IsOpen)
                 {
-                    if (serialPort == null || !serialPort.IsOpen)
-                    {
-                        DebOutPut.DebLog("串口未打开!");
-                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "串口未打开!");
-                        return null;
-                    }
-                    serialPort.DiscardInBuffer();
-                    string sendCmd = Tools.ByteToHexStr(cmd);
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送命令:" + sendCmd);
-
-                    int index = 0;
-                    for (int i = 0; i < 3; i++)
-                    {
-                        serialPort.Write(cmd, 0, cmd.Length);
-                        Thread.Sleep(300);
-                        if (serialPort.BytesToRead <= 0)
-                            index++;
-                        else
-                            break;
-                    }
-                    if (index == 3)
-                    {
-                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "指令连续3次发送未收到回复，指令为：" + sendCmd.ToUpper());
-                        return null;
-                    }
-                    int ilen = serialPort.BytesToRead;
-                    if (ilen <= 0)
-                    {
-                        return null;
-                    }
-                    byte[] readBytes = new byte[ilen];
-                    serialPort.Read(readBytes, 0, ilen);
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "接收终端回应:" + Tools.ByteToHexStr(readBytes));
-                    return readBytes;
-                }
-                catch (Exception ex)
-                {
-                    DebOutPut.DebLog(ex.ToString());
-                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                    DebOutPut.DebLog("串口未打开!");
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "串口未打开!");
                     return null;
                 }
+                serialPort.DiscardInBuffer();
+                string sendCmd = Tools.ByteToHexStr(cmd);
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送命令:" + sendCmd);
+
+                int index = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    serialPort.Write(cmd, 0, cmd.Length);
+                    Thread.Sleep(300);
+                    if (serialPort.BytesToRead <= 0)
+                        index++;
+                    else
+                        break;
+                }
+                if (index == 3)
+                {
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "指令连续3次发送未收到回复，指令为：" + sendCmd.ToUpper());
+                    return null;
+                }
+                int ilen = serialPort.BytesToRead;
+                if (ilen <= 0)
+                {
+                    return null;
+                }
+                byte[] readBytes = new byte[ilen];
+                serialPort.Read(readBytes, 0, ilen);
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "接收终端回应:" + Tools.ByteToHexStr(readBytes));
+                return readBytes;
+            }
+            catch (Exception ex)
+            {
+                DebOutPut.DebLog(ex.ToString());
+                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+                return null;
             }
         }
+
 
 
         /// <summary>
@@ -154,6 +155,6 @@ namespace MiniSpore.Common
                 return false;
             }
         }
-
     }
+
 }
