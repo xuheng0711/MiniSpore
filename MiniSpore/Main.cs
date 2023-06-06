@@ -963,6 +963,13 @@ namespace MiniSpore
             CameraClose();
             executeTime = DateTime.Now;
             byte[] res = null;
+            //关闭风扇
+            res = OperaCommand(0x96, 0);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //关闭补光灯
             res = OperaCommand(0x95, 0);
             if (res == null)
