@@ -66,7 +66,8 @@ namespace MiniSpore
         #endregion
 
         bool isReceiveBluetooth = false;//是否接收蓝牙数据
-        bool isBand = true;//载玻带是否正常
+        bool isBand = false;//载玻带是否正常
+        bool isAlarm = false;//是否震动报警
         bool isX1 = false;
         bool isX2 = false;
 
@@ -570,7 +571,7 @@ namespace MiniSpore
                         motorShaft = JsonConvert.DeserializeObject<MotorShaft>(data + "");
                         if (motorShaft.Way == 1)
                         {
-                            res = OperaCommand(0x21, motorShaft.Step);
+                            res = OperaCommand(0x12, motorShaft.Step);
                         }
                         else
                         {
@@ -591,10 +592,10 @@ namespace MiniSpore
                         byte oper = 0x00;
                         switch (motorShaft.Way)
                         {
-                            case 0: oper = 0x30; break;
-                            case 1: oper = 0x32; break;
-                            case 2: oper = 0x31; break;
-                            case 3: oper = 0x33; break;
+                            case 0: oper = 0x20; break;
+                            case 1: oper = 0x22; break;
+                            case 2: oper = 0x21; break;
+                            case 3: oper = 0x23; break;
                         }
                         res = OperaCommand(oper, motorShaft.Step);
                         if (res != null)
@@ -692,11 +693,12 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer1, 1) == 0)
             {
                 errorMessage = "";
-                if (!isBand)
+                if (isBand)
                 {
                     errorMessage = "载玻带异常";
                     return;
                 }
+
                 if (step == 1 && !isX1)
                 {
                     errorMessage = "限位X1异常";
@@ -937,7 +939,7 @@ namespace MiniSpore
                 {
                     isFault = true;
                 }
-                string str2Hex = string.Format("00000{0}{1}{2}", isFault == true ? 1 : 0, isOnline == false ? 1 : 0, isReceiveBluetooth == false ? 1 : 0);
+                string str2Hex = string.Format("000{2}{1}{0}00", isFault == true ? 1 : 0, isReceiveBluetooth == false ? 1 : 0, isOnline == false ? 1 : 0);
                 byte[] res = OperaCommand(0xA0, Convert.ToInt32(str2Hex, 2));
                 if (res != null && res[2] == 0xA0)
                 {
@@ -950,10 +952,18 @@ namespace MiniSpore
                     {
                         isX2 = true;
                     }
+                    if (((dirs >> 5) & 0x01) == 1)
+                    {
+                        isAlarm = true;
+                    }
                     if (((dirs >> 7) & 0x01) == 1)
                     {
-                        isBand = false;
+                        isBand = true;
                     }
+
+                    //发送设备异常信息
+                    SendDeviceAbnormal(isBand, isAlarm);
+
                 }
                 Interlocked.Exchange(ref inTimer5, 0);
             }
@@ -991,7 +1001,7 @@ namespace MiniSpore
                 return;
             }
             //相机到初始位置(X1)
-            res = OperaCommand(0x30, 0);
+            res = OperaCommand(0x20, 0);
             if (res == null)
             {
                 errorMessage = "主串口通讯异常";
@@ -1052,7 +1062,7 @@ namespace MiniSpore
             {
                 int imageCount = 0;
                 //移动轴二对焦
-                OperaCommand(0x31, photoStepNumber);
+                OperaCommand(0x21, photoStepNumber);
                 Thread.Sleep(2000);
                 DateTime currTime = DateTime.Now;
                 Image image = GetPhoto();
@@ -1291,6 +1301,37 @@ namespace MiniSpore
                 lon = lon
             };
             model.message = location;
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
+            }
+        }
+
+        /// <summary>
+        /// 发送设备异常信息
+        /// </summary>
+        /// <param name="isBand"></param>
+        /// <param name="isAlarm"></param>
+        private void SendDeviceAbnormal(bool isBand, bool isAlarm)
+        {
+
+            ProtocolModel model = new ProtocolModel();
+            model.devId = Param.DeviceID;
+            model.func = 201;
+            model.err = "";
+            DeviceAbnormal deviceAbnormal = new DeviceAbnormal()
+            {
+                isAlarm = isAlarm,
+                isBand = isBand
+            };
+            model.message = deviceAbnormal;
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {

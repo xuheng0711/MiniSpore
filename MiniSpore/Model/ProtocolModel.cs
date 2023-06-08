@@ -44,6 +44,16 @@ namespace MiniSpore.Model
         public string WorkHour { get; set; }
         public string WorkMinute { get; set; }
     }
-
+    public class DeviceAbnormal
+    {
+        /// <summary>
+        /// 是否震动报警
+        /// </summary>
+        public bool isAlarm { get; set; }
+        /// <summary>
+        /// 是否载玻带异常
+        /// </summary>
+        public bool isBand { get; set; }
+    }
 
 }
