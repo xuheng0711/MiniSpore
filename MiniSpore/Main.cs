@@ -1228,7 +1228,7 @@ namespace MiniSpore
 
             ProtocolModel model = new ProtocolModel()
             {
-                func = 200,
+                func = 104,
                 devId = Param.DeviceID,
                 err = "",
                 message = GetActionNameByStep()
@@ -1280,7 +1280,7 @@ namespace MiniSpore
 
             ProtocolModel model = new ProtocolModel()
             {
-                func = 300,
+                func = 200,
                 devId = Param.DeviceID,
                 err = "",
                 message = setting
@@ -1339,7 +1339,7 @@ namespace MiniSpore
 
             ProtocolModel model = new ProtocolModel();
             model.devId = Param.DeviceID;
-            model.func = 201;
+            model.func = 105;
             model.err = "";
             DeviceAbnormal deviceAbnormal = new DeviceAbnormal()
             {
@@ -1460,16 +1460,14 @@ namespace MiniSpore
                         SQLiteHelper.ExecuteNonQuery(sql, parameters);
                         isTransferImage = true;
                         break;
-                    case 200:
+                    case 104:
                         //当前位置
                         break;
-                    case 300:
-                        break;
-                    case 301:
+                    case 200:
                         //读取参数
                         SendSettingMsg();
                         break;
-                    case 302:
+                    case 201:
                         //设置参数
                         if (!string.IsNullOrEmpty(protocol.message + ""))
                         {
@@ -1488,7 +1486,7 @@ namespace MiniSpore
                             Param.WorkHour = settingInfo.WorkHour;
                             Param.WorkMinute = settingInfo.WorkMinute;
                             Param.ChooseImageCount = settingInfo.ChooseImageCount;
-                            SendCommonMsg(302, "");
+                            SendCommonMsg(201, "");
                         }
                         break;
                 }
