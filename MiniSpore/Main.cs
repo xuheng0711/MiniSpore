@@ -252,7 +252,7 @@ namespace MiniSpore
                         mainSerialPort.Close();
                     }
                     mainSerialPort.PortName = Param.SerialPort;
-                    mainSerialPort.BaudRate = 9600;
+                    mainSerialPort.BaudRate = 115200;
                     mainSerialPort.ReceivedBytesThreshold = 1;
                     mainSerialPort.Open();
                 }
@@ -270,7 +270,7 @@ namespace MiniSpore
                         bluetoothSerialPort.Close();
                     }
                     bluetoothSerialPort.PortName = Param.BluetoothPort;
-                    bluetoothSerialPort.BaudRate = 9600;
+                    bluetoothSerialPort.BaudRate = 115200;
                     bluetoothSerialPort.ReceivedBytesThreshold = 1;
                     bluetoothSerialPort.Open();
                 }
@@ -287,7 +287,7 @@ namespace MiniSpore
                         gpsSerialPort.Close();
                     }
                     gpsSerialPort.PortName = Param.GPSPort;
-                    gpsSerialPort.BaudRate = 9600;
+                    gpsSerialPort.BaudRate = 115200;
                     gpsSerialPort.ReceivedBytesThreshold = 1;
                     gpsSerialPort.Open();
                 }
@@ -979,6 +979,13 @@ namespace MiniSpore
             CameraClose();
             executeTime = DateTime.Now;
             byte[] res = null;
+            //发送运行位置
+            res = OperaCommand(0x80, 1);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //关闭风扇
             res = OperaCommand(0x96, 0);
             if (res == null)
@@ -1028,8 +1035,15 @@ namespace MiniSpore
         private void CollectSpore()
         {
             executeTime = DateTime.Now;
+            byte[] res = null;
+            res = OperaCommand(0x80, 2);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //打开吸风
-            byte[] res = OperaCommand(0x91, 800);
+            res = OperaCommand(0x91, 800);
             if (res == null)
             {
                 errorMessage = "主串口通讯异常";
@@ -1051,6 +1065,7 @@ namespace MiniSpore
                 isStart = StartCollection(ref errorMessage);
                 Thread.Sleep(2000);
             }
+            OperaCommand(0x80, 3);
             //打开补光灯
             OperaCommand(0x92, 800);
             //开风扇
