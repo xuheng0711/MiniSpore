@@ -75,6 +75,7 @@ namespace MiniSpore
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.pbMin = new System.Windows.Forms.PictureBox();
             this.pbLogo = new System.Windows.Forms.PictureBox();
+            this.btnUploadData = new System.Windows.Forms.Button();
             this.panelMain.SuspendLayout();
             this.panelContent.SuspendLayout();
             this.gbParameter.SuspendLayout();
@@ -124,6 +125,7 @@ namespace MiniSpore
             // 
             // gbParameter
             // 
+            this.gbParameter.Controls.Add(this.btnUploadData);
             this.gbParameter.Controls.Add(this.btnApply);
             this.gbParameter.Controls.Add(this.btnModify);
             this.gbParameter.Controls.Add(this.cbCommunicateMode);
@@ -146,9 +148,9 @@ namespace MiniSpore
             this.btnApply.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnApply.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.btnApply.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnApply.Location = new System.Drawing.Point(708, 21);
+            this.btnApply.Location = new System.Drawing.Point(614, 21);
             this.btnApply.Name = "btnApply";
-            this.btnApply.Size = new System.Drawing.Size(80, 32);
+            this.btnApply.Size = new System.Drawing.Size(70, 32);
             this.btnApply.TabIndex = 115;
             this.btnApply.Text = "应用";
             this.btnApply.UseVisualStyleBackColor = false;
@@ -160,9 +162,9 @@ namespace MiniSpore
             this.btnModify.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnModify.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.btnModify.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnModify.Location = new System.Drawing.Point(608, 21);
+            this.btnModify.Location = new System.Drawing.Point(537, 21);
             this.btnModify.Name = "btnModify";
-            this.btnModify.Size = new System.Drawing.Size(80, 32);
+            this.btnModify.Size = new System.Drawing.Size(70, 32);
             this.btnModify.TabIndex = 114;
             this.btnModify.Text = "修改";
             this.btnModify.UseVisualStyleBackColor = false;
@@ -177,7 +179,7 @@ namespace MiniSpore
             "Socket"});
             this.cbCommunicateMode.Location = new System.Drawing.Point(422, 25);
             this.cbCommunicateMode.Name = "cbCommunicateMode";
-            this.cbCommunicateMode.Size = new System.Drawing.Size(123, 26);
+            this.cbCommunicateMode.Size = new System.Drawing.Size(100, 26);
             this.cbCommunicateMode.TabIndex = 113;
             this.cbCommunicateMode.SelectedIndexChanged += new System.EventHandler(this.cbCommunicateMode_SelectedIndexChanged);
             // 
@@ -619,6 +621,20 @@ namespace MiniSpore
             this.pbLogo.TabIndex = 1;
             this.pbLogo.TabStop = false;
             // 
+            // btnUploadData
+            // 
+            this.btnUploadData.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(44)))), ((int)(((byte)(114)))), ((int)(((byte)(217)))));
+            this.btnUploadData.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUploadData.Font = new System.Drawing.Font("宋体", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnUploadData.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnUploadData.Location = new System.Drawing.Point(699, 21);
+            this.btnUploadData.Name = "btnUploadData";
+            this.btnUploadData.Size = new System.Drawing.Size(90, 32);
+            this.btnUploadData.TabIndex = 116;
+            this.btnUploadData.Text = "上传数据";
+            this.btnUploadData.UseVisualStyleBackColor = false;
+            this.btnUploadData.Click += new System.EventHandler(this.btnUploadData_Click);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -714,6 +730,7 @@ namespace MiniSpore
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Label lblLocation;
         private System.Windows.Forms.Label lblMessage;
+        private System.Windows.Forms.Button btnUploadData;
     }
 }
 

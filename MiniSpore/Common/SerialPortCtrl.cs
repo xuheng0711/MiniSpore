@@ -58,7 +58,7 @@ namespace MiniSpore.Common
         /// </summary>
         /// <param name="serialPort">serialPort</param>
         /// <param name="Msg">数据</param>
-        public void SendMsg(SerialPort serialPort, string Msg)
+        public void SendMsg(SerialPort serialPort, string Message)
         {
             lock (locker)
             {
@@ -70,9 +70,10 @@ namespace MiniSpore.Common
                         return;
                     }
                     serialPort.DiscardInBuffer();//清理缓存
-                    //Msg += "\r\n";
-                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Msg);
-                    serialPort.Write(Msg);
+                    //Message += "\r\n";
+                    byte[] buffer = Encoding.ASCII.GetBytes(Message);
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Message);
+                    serialPort.Write(buffer, 0, buffer.Length);
                 }
                 catch (Exception ex)
                 {
@@ -80,6 +81,8 @@ namespace MiniSpore.Common
                 }
             }
         }
+
+
 
         /// <summary>
         /// 发送字节指令

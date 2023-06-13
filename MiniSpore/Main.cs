@@ -268,7 +268,7 @@ namespace MiniSpore
                         bluetoothSerialPort.Close();
                     }
                     bluetoothSerialPort.PortName = Param.BluetoothPort;
-                    bluetoothSerialPort.BaudRate = 115200;
+                    bluetoothSerialPort.BaudRate = 9600;
                     bluetoothSerialPort.ReceivedBytesThreshold = 1;
                     bluetoothSerialPort.Open();
                 }
@@ -297,7 +297,7 @@ namespace MiniSpore
             catch (Exception ex)
             {
                 isSuccess = false;
-                errorMessage = ex.Message;
+                //errorMessage = ex.Message;
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
             }
             showError(errorMessage);
@@ -407,35 +407,40 @@ namespace MiniSpore
         /// <param name="e"></param>
         private void bluetoothSerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            try
+            lock (locker)
             {
-                if (bluetoothSerialPort == null || !bluetoothSerialPort.IsOpen)
+                try
                 {
-                    return;
+                    if (bluetoothSerialPort == null || !bluetoothSerialPort.IsOpen)
+                    {
+                        return;
+                    }
+                    Thread.Sleep(200);//延迟接收数据
+                    int ilen = bluetoothSerialPort.BytesToRead;
+                    byte[] readBytes = new byte[ilen];
+                    bluetoothSerialPort.Read(readBytes, 0, ilen);
+                    string receiveMessage = ASCIIEncoding.ASCII.GetString(readBytes);
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "蓝牙接收指令:" + receiveMessage);
+                    receiveMessage = receiveMessage.Replace("\r\n", "");
+                    if (string.IsNullOrEmpty(receiveMessage))
+                    {
+                        return;
+                    }
+                    if (receiveMessage == "OK")
+                    {
+                        isReceiveBluetooth = true;
+                    }
+                    else
+                    {
+                        //执行指令
+                        BluetoothModel receiveData = JsonConvert.DeserializeObject<BluetoothModel>(receiveMessage);
+                        dealBluetoothData(receiveData.Func, receiveData.Message);
+                    }
                 }
-                Thread.Sleep(200);//延迟接收数据
-                int ilen = bluetoothSerialPort.BytesToRead;
-                byte[] readBytes = new byte[ilen];
-                bluetoothSerialPort.Read(readBytes, 0, ilen);
-                string receiveMessage = ASCIIEncoding.ASCII.GetString(readBytes);
-                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "蓝牙接收指令:" + receiveMessage);
-                receiveMessage = receiveMessage.Replace("\r\n", "");
-                if (string.IsNullOrEmpty(receiveMessage))
+                catch (Exception ex)
                 {
-                    return;
+                    DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
                 }
-                if (receiveMessage == "OK")
-                {
-                    isReceiveBluetooth = true;
-                }
-                //执行指令
-                BluetoothModel receiveData = JsonConvert.DeserializeObject<BluetoothModel>(receiveMessage);
-                dealBluetoothData(receiveData.Func, receiveData.Message);
-
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
             }
         }
 
@@ -461,7 +466,7 @@ namespace MiniSpore
                         bluetoothModel = new BluetoothModel()
                         {
                             Func = 200,
-                            Message = errorMessage
+                            Message = getErrorCode(errorMessage)
                         };
                         serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                         break;
@@ -483,7 +488,7 @@ namespace MiniSpore
                             CommunicateMode = nCommunicateMode,
                             ServerIP = strServerIP,
                             ServerPort = nServerPort,
-                            Action = GetActionNameByStep(),
+                            Action = step.ToString(),
                             WorkMode = int.Parse(Param.WorkMode),
                             CollectTime = int.Parse(Param.CollectTime),
                             WorkHour = int.Parse(Param.WorkHour),
@@ -627,6 +632,10 @@ namespace MiniSpore
                             serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                         }
                         break;
+                    case 304:
+                        //程序重启
+                        Tools.RestStart();
+                        break;
 
                 }
 
@@ -694,8 +703,8 @@ namespace MiniSpore
                 errorMessage = "";
                 if (isBand)
                 {
-                    //errorMessage = "载玻带异常";
-                    //return;
+                    errorMessage = "载玻带异常";
+                    return;
                 }
 
                 if (step == 1 && !isX2)
@@ -884,7 +893,7 @@ namespace MiniSpore
                 }
 
                 //相机搜索
-                if (step <= 2)
+                if (step <= 2 && string.IsNullOrEmpty(errorMessage))
                 {
                     //errorMessage = "";
                     if (m_pMyCamera == null || !m_pMyCamera.MV_CC_IsDeviceConnected_NET())
@@ -1021,14 +1030,14 @@ namespace MiniSpore
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
 
             //拉出载玻带（顺时针）
-            int bandStep= int.Parse(Param.CollectStrength);
+            int bandStep = int.Parse(Param.CollectStrength);
             res = OperaCommand(0x11, bandStep);
             if (res == null)
             {
                 errorMessage = "主串口通讯异常";
                 return;
             }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", bandStep) );
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", bandStep));
             step = 1;
             Timer2Start();
         }
@@ -1080,7 +1089,7 @@ namespace MiniSpore
             int focusCount = 0;
             int imageCount = 0;
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始对焦");
-            while (focusCount <= 300)
+            while (focusCount <= int.Parse(Param.MaxFocusCount))
             {
                 //移动轴二对焦
                 OperaCommand(0x22, photoStep);
@@ -1159,7 +1168,7 @@ namespace MiniSpore
                     continue;
                 }
                 //传输图像
-
+                isTransferImage = false;
                 bool bIsSuccess = SendPictureMsg(strCollectTime, imagePath);
                 if (!bIsSuccess)
                 {
@@ -1539,6 +1548,26 @@ namespace MiniSpore
         }
 
         /// <summary>
+        /// 获取错误码
+        /// </summary>
+        /// <param name="errorMsg"></param>
+        /// <returns></returns>
+        private string getErrorCode(string errorMsg)
+        {
+            string errorCode = "";
+            switch (errorMsg)
+            {
+                case "未配置主串口通讯": errorCode = "1001"; break;
+                case "主串口通讯异常": errorCode = "1002"; break;
+                case "载玻带异常": errorCode = "1003"; break;
+                case "限位X2异常": errorCode = "1004"; break;
+                case "未搜索到相机": errorCode = "1005"; break;
+                case "打开相机失败": errorCode = "1006"; break;
+            }
+            return errorCode;
+        }
+
+        /// <summary>
         /// 设置控件是否可用
         /// </summary>
         /// <param name="bEnabled"></param>
@@ -1898,7 +1927,7 @@ namespace MiniSpore
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 2000/*过滤掉面积小于4500的*/)
+                    if (are < 3000/*过滤掉面积小于3000的*/)
                     {
                         continue;
                     }
@@ -2116,6 +2145,10 @@ namespace MiniSpore
             setting.ShowDialog();
         }
 
+        private void btnUploadData_Click(object sender, EventArgs e)
+        {
+            UploadData(false);
+        }
 
     }
 }
