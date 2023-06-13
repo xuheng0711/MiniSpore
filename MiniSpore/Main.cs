@@ -32,7 +32,7 @@ namespace MiniSpore
         public static PushSettingMessage pushSettingMessage;
         private string errorMessage = "";
         //拍照步数
-        private int photoStep = 4;
+        private int photoStep = 20;
         //位置标记
         private int step = -1;
         ////配置文件地址
@@ -70,8 +70,6 @@ namespace MiniSpore
         bool isAlarm = false;//是否震动报警
         bool isX1 = false;
         bool isX2 = false;
-
-
 
         //传输图像是否完成
         private bool isTransferImage = false;
@@ -287,7 +285,7 @@ namespace MiniSpore
                         gpsSerialPort.Close();
                     }
                     gpsSerialPort.PortName = Param.GPSPort;
-                    gpsSerialPort.BaudRate = 115200;
+                    gpsSerialPort.BaudRate = 9600;
                     gpsSerialPort.ReceivedBytesThreshold = 1;
                     gpsSerialPort.Open();
                 }
@@ -302,7 +300,7 @@ namespace MiniSpore
                 errorMessage = ex.Message;
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "串口初始化失败:" + ex.Message);
             }
-            showMessage(errorMessage, true);
+            showError(errorMessage);
             return isSuccess;
         }
 
@@ -592,11 +590,12 @@ namespace MiniSpore
                         byte oper = 0x00;
                         switch (motorShaft.Way)
                         {
-                            case 0: oper = 0x20; break;
+                            case 0: oper = 0x20; motorShaft.Step = 1; break;
                             case 1: oper = 0x22; break;
                             case 2: oper = 0x21; break;
-                            case 3: oper = 0x23; break;
+                            case 3: oper = 0x23; motorShaft.Step = 2; break;
                         }
+
                         res = OperaCommand(oper, motorShaft.Step);
                         if (res != null)
                         {
@@ -695,13 +694,13 @@ namespace MiniSpore
                 errorMessage = "";
                 if (isBand)
                 {
-                    errorMessage = "载玻带异常";
-                    return;
+                    //errorMessage = "载玻带异常";
+                    //return;
                 }
 
-                if (step == 1 && !isX1)
+                if (step == 1 && !isX2)
                 {
-                    errorMessage = "限位X1异常";
+                    errorMessage = "限位X2异常";
                     return;
                 }
                 Timer1Stop();
@@ -752,8 +751,8 @@ namespace MiniSpore
                     if (step == 1)
                     {
                         //初始化90秒时间
-                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddSeconds(90), dateNowTime) + " 秒");
-                        if (dateNowTime > executeTime.AddSeconds(90))
+                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddSeconds(120), dateNowTime) + " 秒");
+                        if (dateNowTime > executeTime.AddSeconds(120))
                         {
                             showMessage("无数据");
                             Timer2Stop();
@@ -907,7 +906,7 @@ namespace MiniSpore
                         }
                     }
                 }
-                showMessage(errorMessage, true);
+                showError(errorMessage);
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -944,11 +943,11 @@ namespace MiniSpore
                 if (res != null && res[2] == 0xA0)
                 {
                     int dirs = res[6];
-                    if (((dirs >> 0) & 0x01) == 0)
+                    if (((dirs >> 0) & 0x01) == 1)
                     {
                         isX1 = true;
                     }
-                    if (((dirs >> 1) & 0x01) == 0)
+                    if (((dirs >> 1) & 0x01) == 1)
                     {
                         isX2 = true;
                     }
@@ -993,6 +992,8 @@ namespace MiniSpore
                 errorMessage = "主串口通讯异常";
                 return;
             }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭风扇");
+
             //关闭补光灯
             res = OperaCommand(0x95, 0);
             if (res == null)
@@ -1000,6 +1001,7 @@ namespace MiniSpore
                 errorMessage = "主串口通讯异常";
                 return;
             }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭补光灯");
             //关闭吸风
             res = OperaCommand(0x94, 0);
             if (res == null)
@@ -1007,24 +1009,26 @@ namespace MiniSpore
                 errorMessage = "主串口通讯异常";
                 return;
             }
-            //相机到初始位置(X1)
-            res = OperaCommand(0x20, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            //拉出载玻带（顺时针）
-            int runSteps = CalculationDrivingWheelSteps(int.Parse(Param.CollectStrength));
-            res = OperaCommand(0x11, runSteps);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            Param.Set_ConfigParm(configfileName, "Config", "AccumulateSteps", (int.Parse(Param.AccumulateSteps) + runSteps).ToString());
-            Param.AccumulateSteps = Param.Read_ConfigParam(configfileName, "Config", "AccumulateSteps");//主动轮累计运行步数
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭吸风");
 
+            //相机到X2位置
+            res = OperaCommand(0x23, 2);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
+
+            //拉出载玻带（顺时针）
+            int bandStep= int.Parse(Param.CollectStrength);
+            res = OperaCommand(0x11, bandStep);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", bandStep) );
             step = 1;
             Timer2Start();
         }
@@ -1034,6 +1038,7 @@ namespace MiniSpore
         /// </summary>
         private void CollectSpore()
         {
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始收集孢子");
             executeTime = DateTime.Now;
             byte[] res = null;
             res = OperaCommand(0x80, 2);
@@ -1049,6 +1054,7 @@ namespace MiniSpore
                 errorMessage = "主串口通讯异常";
                 return;
             }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "打开吸风");
             step = 2;
             Timer2Start();
         }
@@ -1070,14 +1076,14 @@ namespace MiniSpore
             OperaCommand(0x92, 800);
             //开风扇
             OperaCommand(0x93, 0);
-            int photoStepNumber = photoStep;
             //对焦（从限位X1开始直到限位X2，采集到合适图像及终止，如果直到限位X2都采集不到合适图像及终止）
             int focusCount = 0;
-            while (!isX2)
+            int imageCount = 0;
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始对焦");
+            while (focusCount <= 300)
             {
-                int imageCount = 0;
                 //移动轴二对焦
-                OperaCommand(0x21, photoStepNumber);
+                OperaCommand(0x22, photoStep);
                 Thread.Sleep(2000);
                 DateTime currTime = DateTime.Now;
                 Image image = GetPhoto();
@@ -1085,7 +1091,6 @@ namespace MiniSpore
                 string imagePath = Tools.SaveImage(image, imageName);
                 if (string.IsNullOrEmpty(imagePath))
                 {
-                    photoStepNumber += photoStep;
                     continue;
                 }
                 //分析图像
@@ -1104,18 +1109,22 @@ namespace MiniSpore
                     parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
                     SQLiteHelper.ExecuteNonQuery(sql, parameters);
                     imageCount++;
+                    photoStep = 5;
                 }
 
                 focusCount++;
                 showMessage(string.Format("相机第{0}次对焦", focusCount));
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("相机第{0}次对焦", focusCount));
                 if (imageCount >= int.Parse(Param.ChooseImageCount))
                 {
                     break;
                 }
-                photoStepNumber += photoStep;
             }
 
             step = 3;
+            isX1 = false;
+            isX2 = false;
+            showMessage("无数据");
             CameraClose();
             //关闭补光灯
             OperaCommand(0x95, 0);
@@ -1186,14 +1195,14 @@ namespace MiniSpore
         /// </summary>
         /// <param name="length">载玻带长度</param>
         /// <returns></returns>
-        private int CalculationDrivingWheelSteps(int length)
-        {
-            int nAccumulateSteps = int.Parse(Param.AccumulateSteps);
-            int currWeeks = int.Parse((nAccumulateSteps / 6400.0f).ToString("F0")) + 1;//已经转动的周数
-            double perimeter = 2 * Math.PI * (38.65 + currWeeks * 0.09f);//周长
-            double step = (length / perimeter) * 6400.0f;
-            return int.Parse(step.ToString("F0"));
-        }
+        //private int CalculationDrivingWheelSteps(int length)
+        //{
+        //    int nAccumulateSteps = int.Parse(Param.AccumulateSteps);
+        //    int currWeeks = int.Parse((nAccumulateSteps / 6400.0f).ToString("F0")) + 1;//已经转动的周数
+        //    double perimeter = 2 * Math.PI * (38.65 + currWeeks * 0.09f);//周长
+        //    double step = (length / perimeter) * 6400.0f;
+        //    return int.Parse(step.ToString("F0"));
+        //}
         /// <summary>
         /// 发送通用成功信息
         /// </summary>
@@ -1889,7 +1898,7 @@ namespace MiniSpore
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 4500/*过滤掉面积小于4500的*/)
+                    if (are < 2000/*过滤掉面积小于4500的*/)
                     {
                         continue;
                     }
@@ -1987,34 +1996,52 @@ namespace MiniSpore
         }
         #endregion
 
+        /// <summary>
+        /// 错误信息
+        /// </summary>
+        /// <param name="message"></param>
 
+        private void showError(string message)
+        {
+            if (lblError.InvokeRequired)
+            {
+                this.Invoke(new MethodInvoker(() =>
+                {
+                    lblError.Text = message;
+                }));
+            }
+            else
+            {
+                lblError.Text = message;
+            }
+        }
 
         /// <summary>
         /// 显示信息
         /// </summary>
         /// <param name="message"></param>
         /// <param name="error"></param>
-        private void showMessage(string message, bool error = false)
+        private void showMessage(string message)
         {
-            lock (locker)
+            if (message.Length > 15)
             {
-                this.Invoke(new EventHandler(delegate
+                message = message.Substring(0, 15) + "\r\n" + message.Substring(15);
+            }
+            if (lblMessage.InvokeRequired)
+            {
+                this.Invoke(new MethodInvoker(() =>
                 {
-                    if (error)
-                    {
-                        lblError.Text = message;
-                    }
-                    else
-                    {
-                        if (message.Length > 15)
-                        {
-                            message = message.Substring(0, 15) + "\r\n" + message.Substring(15);
-                        }
-                        lblMessage.Text = message;
-                    }
+                    lblMessage.Text = message;
                 }));
             }
+            else
+            {
+                lblMessage.Text = message;
+            }
+
         }
+
+
 
         /// <summary>
         /// 最小化

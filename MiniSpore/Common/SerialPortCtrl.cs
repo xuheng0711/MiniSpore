@@ -70,7 +70,7 @@ namespace MiniSpore.Common
                         return;
                     }
                     serialPort.DiscardInBuffer();//清理缓存
-                    Msg += "\r\n";
+                    //Msg += "\r\n";
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.ComLog, "发送信息:" + Msg);
                     serialPort.Write(Msg);
                 }

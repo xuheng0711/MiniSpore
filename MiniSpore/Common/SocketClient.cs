@@ -156,7 +156,6 @@ namespace MiniSpore.Common
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "Socket事件_发送失败:" + cmd);
                         else
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送失败:" + cmd);
-                        DebOutPut.DebLog("Socket事件_发送失败:" + cmd);
                         return false;
                     }
                     else
@@ -165,13 +164,11 @@ namespace MiniSpore.Common
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.KeepAliveLog, "Socket事件_发送成功:" + cmd);
                         else
                             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件_发送成功:" + cmd);
-                        DebOutPut.DebLog("Socket事件_发送成功:" + cmd);
                         return true;
                     }
                 }
                 else
                 {
-                    DebOutPut.DebLog("Socket事件_数据发送，检测到连接异常！");
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "Socket事件，检测到连接异常！");
                     CloseSocket();
                     return false;
@@ -179,7 +176,6 @@ namespace MiniSpore.Common
             }
             catch (Exception ex)
             {
-                DebOutPut.DebLog(ex.ToString());
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
                 CloseSocket();
                 return false;
@@ -198,14 +194,12 @@ namespace MiniSpore.Common
                 if (clientSocket.Connected)
                 {
                     newDateTime = DateTime.Now;
-                    DebOutPut.DebLog("与服务器连接成功！");
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "与服务器连接成功！");
                     Receive(clientSocket);
                 }
             }
             catch (Exception ex)
             {
-                DebOutPut.DebLog("与服务器连接失败:" + ex.ToString());
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, "与服务器连接失败:" + ex.ToString());
             }
             finally
@@ -214,13 +208,11 @@ namespace MiniSpore.Common
                 {
                     InitTimer();
                     myTimer.Enabled = true;
-                    DebOutPut.DebLog("心跳帧启动！");
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "心跳帧启动！");
                 }
                 else if (myTimer.Enabled == false)
                 {
                     myTimer.Enabled = true;
-                    DebOutPut.DebLog("心跳帧启动！");
                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "心跳帧启动！");
                 }
 
