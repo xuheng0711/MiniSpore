@@ -229,6 +229,10 @@ namespace MiniSpore
                 myThread.IsBackground = true;
                 myThread.Start();
             }
+
+            //发送蓝牙数据
+            serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
+
             //执行定时任务
             Timer3Start();
             Timer4Start();
@@ -415,7 +419,7 @@ namespace MiniSpore
                     {
                         return;
                     }
-                    Thread.Sleep(200);//延迟接收数据
+                    Thread.Sleep(850);//延迟接收数据
                     int ilen = bluetoothSerialPort.BytesToRead;
                     byte[] readBytes = new byte[ilen];
                     bluetoothSerialPort.Read(readBytes, 0, ilen);
@@ -426,11 +430,8 @@ namespace MiniSpore
                     {
                         return;
                     }
-                    if (receiveMessage == "OK")
-                    {
-                        isReceiveBluetooth = true;
-                    }
-                    else
+                    isReceiveBluetooth = true;
+                    if (receiveMessage != "OK")
                     {
                         //执行指令
                         BluetoothModel receiveData = JsonConvert.DeserializeObject<BluetoothModel>(receiveMessage);
@@ -504,29 +505,31 @@ namespace MiniSpore
                         break;
                     case 202:
                         deviceParams = JsonConvert.DeserializeObject<DeviceParams>(data + "");
-                        if (deviceParams.CommunicateMode == 0)//mqtt
-                        {
-                            strServerIP = Param.MQTTServerIP;
-                            nServerPort = int.Parse(Param.MQTTServerPort);
-                        }
-                        else
-                        {
-                            strServerIP = Param.SocketServerIP;
-                            nServerPort = int.Parse(Param.SocketServerPort);
-                        }
-
+                        strServerIP = deviceParams.ServerIP;
+                        nServerPort = deviceParams.ServerPort;
                         Param.Set_ConfigParm(Main.configfileName, "Config", "DeviceID", deviceParams.DeviceID);
                         Param.Set_ConfigParm(Main.configfileName, "Config", "CommunicateMode", deviceParams.CommunicateMode + "");
+                        string oriServerIP = "";
+                        string oriServerPort = "";
                         if (deviceParams.CommunicateMode == 0)
                         {
                             Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerIP", strServerIP);
                             Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerPort", nServerPort + "");
+
+                            oriServerIP = Param.MQTTServerIP;
+                            oriServerPort = Param.MQTTServerPort;
                         }
                         else
                         {
                             Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerIP", strServerIP);
                             Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerPort", nServerPort + "");
+
+                            oriServerIP = Param.SocketServerIP;
+                            oriServerPort = Param.SocketServerPort;
                         }
+                        int nOriServerPort = 0;
+                        int.TryParse(oriServerPort,out nOriServerPort);
+
                         Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", deviceParams.WorkMode + "");
                         Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", deviceParams.CollectTime + "");
                         Param.Set_ConfigParm(Main.configfileName, "Config", "WorkHour", deviceParams.WorkHour + "");
@@ -544,7 +547,7 @@ namespace MiniSpore
                             Message = "success"
                         };
                         serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
-                        if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != strServerIP || deviceParams.ServerPort != nServerPort || deviceParams.WorkMode + "" != Param.WorkMode)
+                        if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != oriServerIP || deviceParams.ServerPort != nOriServerPort || deviceParams.WorkMode + "" != Param.WorkMode)
                         {
                             Tools.RestStart();
                         }
@@ -936,11 +939,6 @@ namespace MiniSpore
                 {
                     isOnline = true;
                 }
-
-                //发送蓝牙数据
-                isReceiveBluetooth = false;
-                serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
-                Thread.Sleep(1000);
 
                 bool isFault = false;
                 if (!string.IsNullOrEmpty(errorMessage))
@@ -1497,6 +1495,7 @@ namespace MiniSpore
                             Param.Set_ConfigParm(configfileName, "Config", "ChooseImageCount", settingInfo.ChooseImageCount);
                             if (settingInfo.WorkMode != Param.WorkMode)
                             {
+                                SendCommonMsg(201, "");
                                 Tools.RestStart();
                             }
                             Param.WorkMode = settingInfo.WorkMode;
@@ -1504,7 +1503,6 @@ namespace MiniSpore
                             Param.WorkHour = settingInfo.WorkHour;
                             Param.WorkMinute = settingInfo.WorkMinute;
                             Param.ChooseImageCount = settingInfo.ChooseImageCount;
-                            SendCommonMsg(201, "");
                         }
                         break;
                 }
