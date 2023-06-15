@@ -28,7 +28,7 @@ using System.Windows.Forms;
 namespace MiniSpore
 {
     public delegate void PushSettingMessage();
-    public delegate bool PushTimeSlot();
+    public delegate bool PushTimeSlot(string collectTime, string timeSlot1, string timeSlot2, string timeSlot3);
     public delegate byte[] PushWorkMode(string workMode, bool isStep);
 
     public partial class Main : Form
@@ -239,10 +239,10 @@ namespace MiniSpore
             }
 
             //发送采集时间与时间段
-            if (!SyncTimeSlot())
-            {
-                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "同步采集时间点与采集时间失败");
-            }
+            //if (!SyncTimeSlot())
+            //{
+            //    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "同步采集时间点与采集时间失败");
+            //}
 
             //发送蓝牙数据
             serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
@@ -456,16 +456,16 @@ namespace MiniSpore
         /// <summary>
         /// 同步采集时间段
         /// </summary>
-        private bool SyncTimeSlot()
+        private bool SyncTimeSlot(string collectTime, string timeSlot1, string timeSlot2, string timeSlot3)
         {
             int nTimeSlot1 = 0;
-            int.TryParse(Param.TimeSlot1, out nTimeSlot1);
+            int.TryParse(timeSlot1, out nTimeSlot1);
             int nTimeSlot2 = 0;
-            int.TryParse(Param.TimeSlot2, out nTimeSlot2);
+            int.TryParse(timeSlot2, out nTimeSlot2);
             int nTimeSlot3 = 0;
-            int.TryParse(Param.TimeSlot3, out nTimeSlot3);
+            int.TryParse(timeSlot3, out nTimeSlot3);
             int nCollectTime = 0;
-            int.TryParse(Param.CollectTime, out nCollectTime);
+            int.TryParse(collectTime, out nCollectTime);
             string strHex = nCollectTime.ToString("x2") + nTimeSlot3.ToString("x2") + nTimeSlot2.ToString("x2") + nTimeSlot1.ToString("x2");
             byte[] byteHex = Tools.HexStrTobyte(strHex);
             int value = BitConverter.ToInt32(byteHex, 0);
@@ -633,7 +633,7 @@ namespace MiniSpore
                         {
                             if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
                             {
-                                if (!SyncTimeSlot())
+                                if (!SyncTimeSlot(strCollectTime, strTimeSlot1, strTimeSlot2, strTimeSlot3))
                                 {
                                     isSuccess = false;
                                     DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "蓝牙修改采集时间点失败");
@@ -1612,7 +1612,7 @@ namespace MiniSpore
                                 if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
                                 {
 
-                                    if (!SyncTimeSlot())
+                                    if (!SyncTimeSlot(strCollectTime, strTimeSlot1, strTimeSlot2, strTimeSlot3))
                                     {
                                         isSuccess = false;
                                         DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "平台修改采集时间点失败");
@@ -2170,13 +2170,18 @@ namespace MiniSpore
             {
                 int.TryParse(workMode, out nWorkMode);
             }
-            string strHex = step.ToString("x2") + nWorkMode.ToString("x2");
+            string strHex = nWorkMode.ToString("x2") + step.ToString("x2");
             byte[] byteHex = Tools.HexStrTobyte(strHex);
-            int value = BitConverter.ToInt16(byteHex, 0);
+            int value = byteHex[0] * 256 + byteHex[1];
             byte[] res = OperaCommand(0x80, value);
             return res;
         }
-
+        /// <summary>
+        /// 执行指令
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         private byte[] OperaCommand(byte func, int value)
         {
             lock (cmdLocker)

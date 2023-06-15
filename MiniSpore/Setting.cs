@@ -88,12 +88,7 @@ namespace MiniSpore
             string strTimeSlot1 = cbTimeSlot1.SelectedItem + "";
             string strTimeSlot2 = cbTimeSlot2.SelectedItem + "";
             string strTimeSlot3 = cbTimeSlot3.SelectedItem + "";
-
-            Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
             Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
 
             if (nWorkMode != int.Parse(Param.WorkMode))
             {
@@ -104,6 +99,24 @@ namespace MiniSpore
                     return;
                 }
             }
+
+            if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+            {
+                if (!Main.pushTimeSlot(strCollectTime, strTimeSlot1, strTimeSlot2, strTimeSlot3))
+                {
+                    MessageBox.Show("采集时间点设置失败，请重试", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                Param.CollectTime = strCollectTime;
+                Param.TimeSlot1 = strTimeSlot1;
+                Param.TimeSlot2 = strTimeSlot2;
+                Param.TimeSlot3 = strTimeSlot3;
+                Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
+                Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
+            }
+
 
             if (strPort != Param.SerialPort || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
             {
@@ -120,14 +133,7 @@ namespace MiniSpore
             }
             else
             {
-                if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
-                {
-                    Param.CollectTime = strCollectTime;
-                    Param.TimeSlot1 = strTimeSlot1;
-                    Param.TimeSlot2 = strTimeSlot2;
-                    Param.TimeSlot3 = strTimeSlot3;
-                    Main.pushTimeSlot();
-                }
+              
                 Param.ChooseImageCount = strChooseImageCount;
                 Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);

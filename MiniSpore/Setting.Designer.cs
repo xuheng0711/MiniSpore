@@ -30,6 +30,12 @@ namespace MiniSpore
         private void InitializeComponent()
         {
             this.panelMain = new System.Windows.Forms.Panel();
+            this.cbTimeSlot3 = new System.Windows.Forms.ComboBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.cbTimeSlot2 = new System.Windows.Forms.ComboBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.cbTimeSlot1 = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.tbChooseImageCount = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.cbGPSPort = new System.Windows.Forms.ComboBox();
@@ -47,12 +53,6 @@ namespace MiniSpore
             this.panelTitle = new System.Windows.Forms.Panel();
             this.pbClose = new System.Windows.Forms.PictureBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.cbTimeSlot1 = new System.Windows.Forms.ComboBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.cbTimeSlot2 = new System.Windows.Forms.ComboBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.cbTimeSlot3 = new System.Windows.Forms.ComboBox();
-            this.label9 = new System.Windows.Forms.Label();
             this.panelMain.SuspendLayout();
             this.panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbClose)).BeginInit();
@@ -88,6 +88,66 @@ namespace MiniSpore
             this.panelMain.Name = "panelMain";
             this.panelMain.Size = new System.Drawing.Size(579, 324);
             this.panelMain.TabIndex = 0;
+            // 
+            // cbTimeSlot3
+            // 
+            this.cbTimeSlot3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbTimeSlot3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.cbTimeSlot3.FormattingEnabled = true;
+            this.cbTimeSlot3.Location = new System.Drawing.Point(143, 251);
+            this.cbTimeSlot3.Name = "cbTimeSlot3";
+            this.cbTimeSlot3.Size = new System.Drawing.Size(80, 28);
+            this.cbTimeSlot3.TabIndex = 41;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label9.Location = new System.Drawing.Point(39, 255);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(99, 20);
+            this.label9.TabIndex = 40;
+            this.label9.Text = "时间点3：";
+            // 
+            // cbTimeSlot2
+            // 
+            this.cbTimeSlot2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbTimeSlot2.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.cbTimeSlot2.FormattingEnabled = true;
+            this.cbTimeSlot2.Location = new System.Drawing.Point(376, 210);
+            this.cbTimeSlot2.Name = "cbTimeSlot2";
+            this.cbTimeSlot2.Size = new System.Drawing.Size(80, 28);
+            this.cbTimeSlot2.TabIndex = 39;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label8.Location = new System.Drawing.Point(273, 214);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(99, 20);
+            this.label8.TabIndex = 38;
+            this.label8.Text = "时间点2：";
+            // 
+            // cbTimeSlot1
+            // 
+            this.cbTimeSlot1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbTimeSlot1.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.cbTimeSlot1.FormattingEnabled = true;
+            this.cbTimeSlot1.Location = new System.Drawing.Point(143, 207);
+            this.cbTimeSlot1.Name = "cbTimeSlot1";
+            this.cbTimeSlot1.Size = new System.Drawing.Size(80, 28);
+            this.cbTimeSlot1.TabIndex = 37;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.label7.Location = new System.Drawing.Point(39, 211);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(99, 20);
+            this.label7.TabIndex = 36;
+            this.label7.Text = "时间点1：";
             // 
             // tbChooseImageCount
             // 
@@ -268,66 +328,6 @@ namespace MiniSpore
             this.label1.Size = new System.Drawing.Size(160, 24);
             this.label1.TabIndex = 0;
             this.label1.Text = "系统参数配置";
-            // 
-            // cbTimeSlot1
-            // 
-            this.cbTimeSlot1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbTimeSlot1.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbTimeSlot1.FormattingEnabled = true;
-            this.cbTimeSlot1.Location = new System.Drawing.Point(143, 207);
-            this.cbTimeSlot1.Name = "cbTimeSlot1";
-            this.cbTimeSlot1.Size = new System.Drawing.Size(80, 28);
-            this.cbTimeSlot1.TabIndex = 37;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label7.Location = new System.Drawing.Point(39, 211);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(99, 20);
-            this.label7.TabIndex = 36;
-            this.label7.Text = "时间段1：";
-            // 
-            // cbTimeSlot2
-            // 
-            this.cbTimeSlot2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbTimeSlot2.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbTimeSlot2.FormattingEnabled = true;
-            this.cbTimeSlot2.Location = new System.Drawing.Point(376, 210);
-            this.cbTimeSlot2.Name = "cbTimeSlot2";
-            this.cbTimeSlot2.Size = new System.Drawing.Size(80, 28);
-            this.cbTimeSlot2.TabIndex = 39;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label8.Location = new System.Drawing.Point(273, 214);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(99, 20);
-            this.label8.TabIndex = 38;
-            this.label8.Text = "时间段2：";
-            // 
-            // cbTimeSlot3
-            // 
-            this.cbTimeSlot3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbTimeSlot3.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.cbTimeSlot3.FormattingEnabled = true;
-            this.cbTimeSlot3.Location = new System.Drawing.Point(143, 251);
-            this.cbTimeSlot3.Name = "cbTimeSlot3";
-            this.cbTimeSlot3.Size = new System.Drawing.Size(80, 28);
-            this.cbTimeSlot3.TabIndex = 41;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("宋体", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.label9.Location = new System.Drawing.Point(39, 255);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(99, 20);
-            this.label9.TabIndex = 40;
-            this.label9.Text = "时间段3：";
             // 
             // Setting
             // 
