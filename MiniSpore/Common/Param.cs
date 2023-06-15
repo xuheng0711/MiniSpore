@@ -16,13 +16,14 @@ namespace MiniSpore.Common
         public static string SerialPort = "";
         public static string BluetoothPort = "";
         public static string GPSPort = "";
-        public static string WorkMode = "";//0:自动 1:定时
+        public static string WorkMode = "";//0 正常 1调试 2自动
         public static string CollectTime = "";//采集时间
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss";
-        public static string CollectStrength = "";//载玻带长度
         public static string MaxFocusCount = "";//最大对焦次数
         public static string ChooseImageCount = "";//选图张数
-        
+        public static string TimeSlot1 = "";
+        public static string TimeSlot2 = "";
+        public static string TimeSlot3 = "";
         //通讯方式
         public static string CommunicateMode = "";//0:MQTT 1:Socket
         public static string MQTTServerIP = "";
@@ -30,10 +31,6 @@ namespace MiniSpore.Common
         public static string SocketServerIP = "";
         public static string SocketServerPort = "";
 
-        //定时运行采集时间
-        public static string WorkHour = "";
-        public static string WorkMinute = "";
-        public static string isWinRestart = "";//每天电脑是否自动重启  0否  1是
         
         #region MQTT服务器
         public static string MQTTClientID = "";
@@ -64,19 +61,17 @@ namespace MiniSpore.Common
                 CollectTime = Read_ConfigParam(configfileName, "Config", "CollectTime");//采集时长
                 CommunicateMode = Read_ConfigParam(configfileName, "Config", "CommunicateMode");
                 WorkMode = Read_ConfigParam(configfileName, "Config", "WorkMode");//运行模式
-                CollectStrength = Read_ConfigParam(configfileName, "Config", "CollectStrength");
                 MaxFocusCount = Read_ConfigParam(configfileName, "Config", "MaxFocusCount");
                 ChooseImageCount = Read_ConfigParam(configfileName, "Config", "ChooseImageCount");//选图数量
+                TimeSlot1= Read_ConfigParam(configfileName, "Config", "TimeSlot1");
+                TimeSlot2 = Read_ConfigParam(configfileName, "Config", "TimeSlot2");
+                TimeSlot3 = Read_ConfigParam(configfileName, "Config", "TimeSlot3");
                 //MQTT协议
                 MQTTServerIP = Read_ConfigParam(configfileName, "Config", "MQTTServerIP");
                 MQTTServerPort = Read_ConfigParam(configfileName, "Config", "MQTTServerPort");
                 //Socket协议
                 SocketServerIP = Read_ConfigParam(configfileName, "Config", "SocketServerIP");
                 SocketServerPort = Read_ConfigParam(configfileName, "Config", "SocketServerPort");
-                //定时时间
-                WorkHour = Read_ConfigParam(configfileName, "Config", "WorkHour");
-                WorkMinute = Read_ConfigParam(configfileName, "Config", "WorkMinute");
-                isWinRestart = Read_ConfigParam(configfileName, "Config", "isWinRestart");
 
 
                 if (CommunicateMode == "0")

@@ -15,6 +15,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Resources;
 using System.Runtime.InteropServices;
@@ -27,14 +28,19 @@ using System.Windows.Forms;
 namespace MiniSpore
 {
     public delegate void PushSettingMessage();
+    public delegate void PushTimeSlot();
+    public delegate byte[] PushWorkMode();
+
     public partial class Main : Form
     {
         public static PushSettingMessage pushSettingMessage;
+        public static PushTimeSlot pushTimeSlot;
+        public static PushWorkMode pushWorkMode;
         private string errorMessage = "";
         //拍照步数
         private int photoStep = 20;
         //位置标记
-        private int step = -1;
+        private int step = 0;
         ////配置文件地址
         internal static string configfileName = "Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
@@ -68,7 +74,6 @@ namespace MiniSpore
         bool isReceiveBluetooth = false;//是否接收蓝牙数据
         bool isBand = false;//载玻带是否正常
         bool isAlarm = false;//是否震动报警
-        bool isX1 = false;
         bool isX2 = false;
 
         //传输图像是否完成
@@ -193,7 +198,8 @@ namespace MiniSpore
             //开机自启
             Tools.AutoStart(true);
             pushSettingMessage = SendSettingMsg;
-
+            pushTimeSlot = SyncTimeSlot;
+            pushWorkMode = PushCurrWorkMode;
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -205,6 +211,12 @@ namespace MiniSpore
             //初始化串口信息
             if (!SerialInit())
             {
+                return;
+            }
+            byte[] res = PushCurrWorkMode();
+            if (res == null || res[2] != 0x80)
+            {
+                errorMessage = "主串口通讯异常";
                 return;
             }
             //串口数据绑定事件
@@ -230,8 +242,23 @@ namespace MiniSpore
                 myThread.Start();
             }
 
+            //发送采集时间与时间段
+            Thread timeSlotThread = new Thread(new ThreadStart(SyncTimeSlot));
+            timeSlotThread.IsBackground = true;
+            timeSlotThread.Start();
+
             //发送蓝牙数据
             serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
+
+            //校准时间
+            Thread timeThread = new Thread(new ThreadStart(CalibrationTime));
+            timeThread.IsBackground = true;
+            timeThread.Start();
+
+            //数据查漏
+            Thread dataThread = new Thread(new ParameterizedThreadStart(UploadData));
+            dataThread.IsBackground = true;
+            dataThread.Start(false);
 
             //执行定时任务
             Timer3Start();
@@ -321,7 +348,17 @@ namespace MiniSpore
                 txtMQTTPort.Text = Param.MQTTServerPort;
                 txtSocketAddress.Text = Param.SocketServerIP;
                 txtSocketPort.Text = Param.SocketServerPort;
-                lblWorkMode.Text = string.Format("当前运行模式_{0}", Param.WorkMode == "0" ? "自动" : "定时");
+                string strWorkMode = "";
+                switch (Param.WorkMode)
+                {
+                    case "0":
+                        strWorkMode = "正常"; break;
+                    case "1":
+                        strWorkMode = "调试"; break;
+                    case "2":
+                        strWorkMode = "自动"; break;
+                }
+                lblWorkMode.Text = string.Format("当前运行模式_{0}", strWorkMode);
                 string currVersion = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString();
                 lblVersion.Text = string.Format("当前版本：V_{0}", currVersion);
             }));
@@ -401,6 +438,44 @@ namespace MiniSpore
             {
                 DebOutPut.DebLog(ex.ToString());
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
+            }
+        }
+
+
+        /// <summary>
+        /// 校准时间
+        /// </summary>
+        private void CalibrationTime()
+        {
+            DateTime dateTime = GetNetworkTime();
+            long timeStamp = Tools.ToUnixSecondsTime(dateTime);
+            byte[] res = OperaCommand(0x40, (int)timeStamp);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+            }
+        }
+
+        /// <summary>
+        /// 同步采集时间段
+        /// </summary>
+        private void SyncTimeSlot()
+        {
+            int nTimeSlot1 = 0;
+            int.TryParse(Param.TimeSlot1, out nTimeSlot1);
+            int nTimeSlot2 = 0;
+            int.TryParse(Param.TimeSlot2, out nTimeSlot2);
+            int nTimeSlot3 = 0;
+            int.TryParse(Param.TimeSlot3, out nTimeSlot3);
+            int nCollectTime = 0;
+            int.TryParse(Param.CollectTime, out nCollectTime);
+            string strHex = nCollectTime.ToString("x2") + nTimeSlot3.ToString("x2") + nTimeSlot2.ToString("x2") + nTimeSlot1.ToString("x2");
+            byte[] byteHex = Tools.HexStrTobyte(strHex);
+            int value = BitConverter.ToInt32(byteHex, 0);
+            byte[] res = OperaCommand(0x50, value);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
             }
         }
 
@@ -492,8 +567,6 @@ namespace MiniSpore
                             Action = step.ToString(),
                             WorkMode = int.Parse(Param.WorkMode),
                             CollectTime = int.Parse(Param.CollectTime),
-                            WorkHour = int.Parse(Param.WorkHour),
-                            WorkMinute = int.Parse(Param.WorkMinute),
                             ChooseImageCount = int.Parse(Param.ChooseImageCount)
                         };
                         bluetoothModel = new BluetoothModel()
@@ -528,7 +601,7 @@ namespace MiniSpore
                             oriServerPort = Param.SocketServerPort;
                         }
                         int nOriServerPort = 0;
-                        int.TryParse(oriServerPort,out nOriServerPort);
+                        int.TryParse(oriServerPort, out nOriServerPort);
 
                         Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", deviceParams.WorkMode + "");
                         Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", deviceParams.CollectTime + "");
@@ -537,8 +610,6 @@ namespace MiniSpore
                         Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
 
                         Param.CollectTime = deviceParams.CollectTime + "";
-                        Param.WorkHour = deviceParams.WorkHour + "";
-                        Param.WorkMinute = deviceParams.WorkMinute + "";
                         Param.ChooseImageCount = deviceParams.ChooseImageCount + "";
 
                         bluetoothModel = new BluetoothModel()
@@ -709,7 +780,6 @@ namespace MiniSpore
                     errorMessage = "载玻带异常";
                     return;
                 }
-
                 if (step == 1 && !isX2)
                 {
                     errorMessage = "限位X2异常";
@@ -736,12 +806,11 @@ namespace MiniSpore
                         break;
                     case 3:
                         //上传数据
-                        UploadData();
+                        UploadData(true);
                         break;
                     case 4:
                         //流程结束-更新执行指令
                         TaskComplete();
-                        Timer3Start();
                         break;
                 }
 
@@ -762,9 +831,14 @@ namespace MiniSpore
                 {
                     if (step == 1)
                     {
-                        //初始化90秒时间
-                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddSeconds(120), dateNowTime) + " 秒");
-                        if (dateNowTime > executeTime.AddSeconds(120))
+                        int executime = 30;
+                        if (Param.WorkMode == "2")
+                        {
+                            executime = 90;
+                        }
+                        //初始化30秒时间
+                        showMessage("设备初始化中:" + Tools.GetNowTimeSpanSec(executeTime.AddSeconds(executime), dateNowTime) + " 秒");
+                        if (dateNowTime > executeTime.AddSeconds(executime))
                         {
                             showMessage("无数据");
                             Timer2Stop();
@@ -800,69 +874,18 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer3, 1) == 0)
             {
                 string strWorkMode = Param.WorkMode;
-                if (Param.WorkMode == "0")
+                if (strWorkMode == "1")
                 {
-                    //自动
+                    //调试（不运行）
+                    Timer3Stop();
+                }
+                else
+                {
+                    ////正常（开机即运行，只运行一次）
+                    //自动（循环运行）
                     step = 0;
                     Timer1Start();
                     Timer3Stop();
-                }
-                else if (Param.WorkMode == "1")
-                {
-                    //定时
-                    DateTime currTime = DateTime.Now;
-                    int nCurrTime = currTime.Hour * 60 + currTime.Minute;
-                    string sql = "select * from Task where TaskDate=@TaskDate limit 1 offset 0 ";
-                    SQLiteParameter[] parameters =
-                    {
-                       new SQLiteParameter("@TaskDate", DbType.String)
-                    };
-                    parameters[0].Value = currTime.ToString("yyyy-MM-dd");
-                    DataTable dataTable = SQLiteHelper.ExecuteQuery(sql, parameters);
-                    if (dataTable != null && dataTable.Rows.Count > 0)
-                    {
-                        DataRow dataRow = dataTable.Rows[0];
-                        if (dataRow["IsRun"] + "" == "0")
-                        {
-                            int runHour = int.Parse(dataRow["RunHour"] + "");
-                            int runMinute = int.Parse(dataRow["RunMinute"] + "");
-                            int nRunTime = runHour * 60 + runMinute;
-                            if (nCurrTime > nRunTime)
-                            {
-                                //强制执行
-                                this.Invoke(new EventHandler(delegate
-                                {
-                                    lblWorkMode.Text = "当前运行模式_强制运行";
-                                }));
-                                step = 0;
-                                Timer1Start();
-                                Timer3Stop();
-                            }
-                        }
-                    }
-                    else
-                    {
-
-                        int nWorkTime = int.Parse(Param.WorkHour) * 60 + int.Parse(Param.WorkMinute);
-                        if (nCurrTime == nWorkTime)
-                        {
-                            sql = "insert into Task (TaskDate,RunHour,RunMinute,IsRun)values(@TaskDate,@RunHour,@RunMinute,0)";
-                            SQLiteParameter[] taskParams =
-                            {
-                               new SQLiteParameter("@TaskDate", DbType.String),
-                               new SQLiteParameter("@RunHour", DbType.Int32),
-                               new SQLiteParameter("@RunMinute", DbType.Int32)
-                            };
-                            taskParams[0].Value = currTime.ToString("yyyy-MM-dd");
-                            taskParams[1].Value = currTime.Hour;
-                            taskParams[2].Value = currTime.Minute;
-                            SQLiteHelper.ExecuteNonQuery(sql, taskParams);
-                            step = 0;
-                            Timer1Start();
-                            Timer3Stop();
-                        }
-                    }
-
                 }
                 Interlocked.Exchange(ref inTimer3, 0);
             }
@@ -877,24 +900,6 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer4, 1) == 0)
             {
-
-                string currTime = DateTime.Now.ToString("HH:mm");
-
-                //定时关机
-                if (Param.isWinRestart == "1")
-                {
-                    //定时重启
-                    if (currTime == "00:00")
-                    {
-                        Tools.WinRestart();
-                    }
-                }
-                //定时上传数据
-                if (currTime == "05:00" || currTime == "15:00" || currTime == "23:00")
-                {
-                    UploadData(false);
-                }
-
                 //相机搜索
                 if (step <= 2 && string.IsNullOrEmpty(errorMessage))
                 {
@@ -952,7 +957,7 @@ namespace MiniSpore
                     int dirs = res[6];
                     if (((dirs >> 0) & 0x01) == 1)
                     {
-                        isX1 = true;
+                        //isX1 = true;
                     }
                     if (((dirs >> 1) & 0x01) == 1)
                     {
@@ -984,58 +989,63 @@ namespace MiniSpore
             //关闭相机
             CameraClose();
             executeTime = DateTime.Now;
-            byte[] res = null;
-            //发送运行位置
-            res = OperaCommand(0x80, 1);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            //关闭风扇
-            res = OperaCommand(0x96, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭风扇");
 
-            //关闭补光灯
-            res = OperaCommand(0x95, 0);
-            if (res == null)
+            //自动模式
+            if (Param.WorkMode == "2")
             {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭补光灯");
-            //关闭吸风
-            res = OperaCommand(0x94, 0);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭吸风");
+                byte[] res = null;
+                //发送运行位置
+                res = PushCurrWorkMode();
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                //关闭风扇
+                res = OperaCommand(0x96, 0);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭风扇");
 
-            //相机到X2位置
-            res = OperaCommand(0x23, 2);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
+                //关闭补光灯
+                res = OperaCommand(0x95, 0);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭补光灯");
+                //关闭吸风
+                res = OperaCommand(0x94, 0);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭吸风");
 
-            //拉出载玻带（顺时针）
-            int bandStep = int.Parse(Param.CollectStrength);
-            res = OperaCommand(0x11, bandStep);
-            if (res == null)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
+                //相机到X2位置
+                res = OperaCommand(0x23, 2);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
+
+                //拉出载玻带（顺时针）
+                res = OperaCommand(0x11, 1850);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", 1850));
             }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", bandStep));
+
             step = 1;
             Timer2Start();
         }
@@ -1045,25 +1055,33 @@ namespace MiniSpore
         /// </summary>
         private void CollectSpore()
         {
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始收集孢子");
-            executeTime = DateTime.Now;
-            byte[] res = null;
-            res = OperaCommand(0x80, 2);
-            if (res == null)
+            if (Param.WorkMode == "2")
             {
-                errorMessage = "主串口通讯异常";
-                return;
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始收集孢子");
+                executeTime = DateTime.Now;
+                byte[] res = null;
+                res = PushCurrWorkMode();
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                //打开吸风
+                res = OperaCommand(0x91, 800);
+                if (res == null)
+                {
+                    errorMessage = "主串口通讯异常";
+                    return;
+                }
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "打开吸风");
+                step = 2;
+                Timer2Start();
             }
-            //打开吸风
-            res = OperaCommand(0x91, 800);
-            if (res == null)
+            else
             {
-                errorMessage = "主串口通讯异常";
-                return;
+                step = 2;
+                Timer1Start();
             }
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "打开吸风");
-            step = 2;
-            Timer2Start();
         }
 
         /// <summary>
@@ -1071,6 +1089,7 @@ namespace MiniSpore
         /// </summary>
         private void TakePhotos()
         {
+            byte[] res = null;
             //开启采集
             bool isStart = false;
             while (!isStart)
@@ -1078,11 +1097,28 @@ namespace MiniSpore
                 isStart = StartCollection(ref errorMessage);
                 Thread.Sleep(2000);
             }
-            OperaCommand(0x80, 3);
+            res = PushCurrWorkMode();
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
             //打开补光灯
-            OperaCommand(0x92, 800);
+            res = OperaCommand(0x92, 800);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "打开补光灯");
             //开风扇
-            OperaCommand(0x93, 0);
+            res = OperaCommand(0x93, 0);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开风扇");
             //对焦（从限位X1开始直到限位X2，采集到合适图像及终止，如果直到限位X2都采集不到合适图像及终止）
             int focusCount = 0;
             int imageCount = 0;
@@ -1129,22 +1165,34 @@ namespace MiniSpore
             }
 
             step = 3;
-            isX1 = false;
             isX2 = false;
             showMessage("无数据");
             CameraClose();
             //关闭补光灯
-            OperaCommand(0x95, 0);
+            res = OperaCommand(0x95, 0);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭补光灯");
             //关闭风扇
-            OperaCommand(0x96, 0);
+            res = OperaCommand(0x96, 0);
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭风扇");
             Timer1Start();
         }
 
         /// <summary>
         /// 上传数据
         /// </summary>
-        private void UploadData(bool isProcess = true)
+        private void UploadData(object isProcess)
         {
+            bool bIsProcess = bool.Parse(isProcess + "");
             string sql = "select * from Record where Flag=0 ";
             DataTable dataTable = SQLiteHelper.ExecuteQuery(sql, null);
             if (dataTable == null || dataTable.Rows.Count <= 0)
@@ -1174,7 +1222,7 @@ namespace MiniSpore
                     break;
                 }
             }
-            if (isProcess)
+            if (bIsProcess)
             {
                 step = 4;
                 Timer1Start();
@@ -1187,14 +1235,22 @@ namespace MiniSpore
         /// </summary>
         private void TaskComplete()
         {
-            DateTime currTime = DateTime.Now;
-            string sql = "update Task set IsRun=1 where TaskDate=@TaskDate";
-            SQLiteParameter[] parameters =
+            byte[] res = null;
+            if (Param.WorkMode == "0")
             {
-                new SQLiteParameter("@TaskDate", DbType.String)
-            };
-            parameters[0].Value = currTime.ToString("yyyy-MM-dd");
-            SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                //正常模式（执行结束关机）
+                res = PushCurrWorkMode();
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "发送关机指令");
+                if (res != null && res[2] == 0x80)
+                {
+                    Tools.WinShutdown();
+                }
+            }
+            else if (Param.WorkMode == "2")
+            {
+                //自动运行
+                Timer3Start();
+            }
         }
 
         /// <summary>
@@ -1289,9 +1345,10 @@ namespace MiniSpore
             {
                 WorkMode = Param.WorkMode,
                 CollectTime = Param.CollectTime,
-                WorkHour = Param.WorkHour,
-                WorkMinute = Param.WorkMinute,
-                ChooseImageCount = Param.ChooseImageCount
+                ChooseImageCount = Param.ChooseImageCount,
+                TimeSlot1 = Param.TimeSlot1,
+                TimeSlot2 = Param.TimeSlot2,
+                TimeSlot3 = Param.TimeSlot3
             };
 
             ProtocolModel model = new ProtocolModel()
@@ -1490,8 +1547,9 @@ namespace MiniSpore
                             SettingInfo settingInfo = JsonConvert.DeserializeObject<SettingInfo>(protocol.message + "");
                             Param.Set_ConfigParm(configfileName, "Config", "WorkMode", settingInfo.WorkMode);
                             Param.Set_ConfigParm(configfileName, "Config", "CollectTime", settingInfo.CollectTime);
-                            Param.Set_ConfigParm(configfileName, "Config", "WorkHour", settingInfo.WorkHour);
-                            Param.Set_ConfigParm(configfileName, "Config", "WorkMinute", settingInfo.WorkMinute);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot1", settingInfo.TimeSlot1);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot2", settingInfo.TimeSlot2);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot3", settingInfo.TimeSlot3);
                             Param.Set_ConfigParm(configfileName, "Config", "ChooseImageCount", settingInfo.ChooseImageCount);
                             if (settingInfo.WorkMode != Param.WorkMode)
                             {
@@ -1500,8 +1558,6 @@ namespace MiniSpore
                             }
                             Param.WorkMode = settingInfo.WorkMode;
                             Param.CollectTime = settingInfo.CollectTime;
-                            Param.WorkHour = settingInfo.WorkHour;
-                            Param.WorkMinute = settingInfo.WorkMinute;
                             Param.ChooseImageCount = settingInfo.ChooseImageCount;
                         }
                         break;
@@ -1967,10 +2023,75 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 获取网络时间
+        /// </summary>
+        /// <returns></returns>
+        private DateTime GetNetworkTime()
+        {
+            try
+            {
+                //default Windows time server
+                const string ntpServer = "time.windows.com";
+                // NTP message size - 16 bytes of the digest (RFC 2030)
+                var ntpData = new byte[48];
+                //Setting the Leap Indicator, Version Number and Mode values
+                ntpData[0] = 0x1B; //LI = 0 (no warning), VN = 3 (IPv4 only), Mode = 3 (Client Mode)
+                var addresses = Dns.GetHostEntry(ntpServer).AddressList;
+
+                //The UDP port number assigned to NTP is 123
+                var ipEndPoint = new IPEndPoint(addresses[0], 123);
+                //NTP uses UDP
+
+                using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                {
+                    socket.Connect(ipEndPoint);
+                    socket.ReceiveTimeout = 3000;
+                    socket.Send(ntpData);
+                    socket.Receive(ntpData);
+                    socket.Close();
+                }
+                const byte serverReplyTime = 40;
+                ulong intPart = BitConverter.ToUInt32(ntpData, serverReplyTime);
+                ulong fractPart = BitConverter.ToUInt32(ntpData, serverReplyTime + 4);
+                intPart = SwapEndianness(intPart);
+                fractPart = SwapEndianness(fractPart);
+                var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
+                //**UTC** time
+                var networkDateTime = (new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc)).AddMilliseconds((long)milliseconds);
+                return networkDateTime.ToLocalTime();
+            }
+            catch (Exception ex)
+            {
+                return DateTime.Now;
+            }
+        }
+        private uint SwapEndianness(ulong x)
+        {
+            return (uint)(((x & 0x000000ff) << 24) +
+                           ((x & 0x0000ff00) << 8) +
+                           ((x & 0x00ff0000) >> 8) +
+                           ((x & 0xff000000) >> 24));
+        }
         #endregion
 
         #region 操作方法
 
+        /// <summary>
+        /// 发送当前位置
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        private byte[] PushCurrWorkMode()
+        {
+            int nWorkMode = 0;
+            int.TryParse(Param.WorkMode, out nWorkMode);
+            string strHex = step.ToString("x2") + nWorkMode.ToString("x2");
+            byte[] byteHex = Tools.HexStrTobyte(strHex);
+            int value = BitConverter.ToInt32(byteHex, 0);
+            byte[] res = OperaCommand(0x80, value);
+            return res;
+        }
 
         private byte[] OperaCommand(byte func, int value)
         {

@@ -36,13 +36,16 @@ namespace MiniSpore.Model
         public string picUrl { get; set; }
     }
 
+
+
     public class SettingInfo
     {
         public string WorkMode { get; set; }
         public string CollectTime { get; set; }
         public string ChooseImageCount { get; set; }
-        public string WorkHour { get; set; }
-        public string WorkMinute { get; set; }
+        public string TimeSlot1 { get; set; }
+        public string TimeSlot2 { get; set; }
+        public string TimeSlot3 { get; set; }
     }
     public class DeviceAbnormal
     {

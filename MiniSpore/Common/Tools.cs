@@ -45,47 +45,29 @@ namespace MiniSpore.Common
         }
 
         /// <summary>
-        /// 图片读取
+        /// hexString转byte[]
         /// </summary>
-        /// <param name="fileName">路径</param>
+        /// <param name="hexString">hexString</param>
         /// <returns></returns>
-        public static Bitmap FileToBitmap(string fileName)
+        public static byte[] HexStrTobyte(string hexString)
         {
-            // 打开文件    
-            FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-            // 读取文件的 byte[]    
-            byte[] bytes = new byte[fileStream.Length];
-            fileStream.Read(bytes, 0, bytes.Length);
-            fileStream.Close();
-            // 把 byte[] 转换成 Stream    
-            Stream stream = new MemoryStream(bytes);
-
-            stream.Read(bytes, 0, bytes.Length);
-            // 设置当前流的位置为流的开始    
-            stream.Seek(0, SeekOrigin.Begin);
-
-            MemoryStream mstream = null;
             try
             {
-                mstream = new MemoryStream(bytes);
-                Bitmap bmp = new Bitmap(stream);
-                //return new Bitmap((Image)new Bitmap(stream));
-                return bmp;
+                hexString = hexString.Replace(" ", "");
+                byte[] returnBytes = new byte[hexString.Length / 2];
+                for (int i = 0; i < returnBytes.Length; i++)
+                {
+                    returnBytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2).Trim(), 16);
+                }
+                return returnBytes;
             }
-            catch (ArgumentNullException ex)
+            catch (Exception ex)
             {
+                DebOutPut.DebLog(ex.ToString());
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
                 return null;
             }
-            catch (ArgumentException ex)
-            {
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return null;
-            }
-            finally
-            {
-                stream.Close();
-            }
+
         }
 
         /// <summary>
@@ -185,9 +167,9 @@ namespace MiniSpore.Common
         }
 
         /// <summary>
-        /// 计算机重启
+        /// 计算机关机
         /// </summary>
-        public static void WinRestart()
+        public static void WinShutdown()
         {
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "计算机自动重启");
             System.Diagnostics.Process myProcess = new System.Diagnostics.Process();
@@ -198,7 +180,7 @@ namespace MiniSpore.Common
             myProcess.StartInfo.RedirectStandardError = true;//是否将错误信息写入流
             myProcess.StartInfo.CreateNoWindow = true;//是否在新窗口中启动进程
             myProcess.Start();//启动进程
-            myProcess.StandardInput.WriteLine("shutdown -r -t 0");//执行重启计算机命令
+            myProcess.StandardInput.WriteLine("shutdown -s");//执行重启计算机命令
         }
         /// <summary>
         /// 求指定时间和当前时间相差的秒数
@@ -241,39 +223,7 @@ namespace MiniSpore.Common
                 DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
             }
         }
-
-        /// <summary>
-        /// 判断当前时间是否在工作时间段内
-        /// </summary>
-        /// <param name="timeStr">当前时间</param>
-        /// <param name="startTime">开始时间</param>
-        /// <param name="endTime">结束时间</param>
-        /// <returns></returns>
-        public static bool GetTimeSpan(string timeStr, string startTime, string endTime)
-        {
-            try
-            {
-                string _strWorkingDayAM = startTime;//工作时间上午08:30
-                string _strWorkingDayPM = endTime;
-                TimeSpan dspWorkingDayAM = DateTime.Parse(_strWorkingDayAM).TimeOfDay;
-                TimeSpan dspWorkingDayPM = DateTime.Parse(_strWorkingDayPM).TimeOfDay;
-                //string time1 = "2017-2-17 8:10:00";
-                DateTime t1 = Convert.ToDateTime(timeStr);
-                TimeSpan dspNow = t1.TimeOfDay;
-                if (dspNow > dspWorkingDayAM && dspNow < dspWorkingDayPM)
-                {
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                DebOutPut.DebLog(ex.ToString());
-                DebOutPut.WriteLog(LogType.Error, LogDetailedType.Ordinary, ex.ToString());
-                return false;
-            }
-        }
-
+         
         /// <summary>
         /// 串口检测
         /// </summary>
@@ -316,6 +266,16 @@ namespace MiniSpore.Common
         }
 
         /// <summary>
+        /// 秒时间戳
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        public static long ToUnixSecondsTime(DateTime date)
+        {
+            var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return Convert.ToInt64((date.ToUniversalTime() - epoch).TotalSeconds);
+        }
+        /// <summary>
         /// 软件重新启动
         /// </summary>
         public static void RestStart()
@@ -327,22 +287,6 @@ namespace MiniSpore.Common
             System.Environment.Exit(0);
         }
 
-        /// <summary>
-        /// 获取当前登录用户(可用于管理员身份运行)
-        /// </summary>
-        /// <returns></returns>
-        public static string GetCurrentUser()
-        {
-            IntPtr buffer;
-            uint strLen;
-            int cur_session = -1;
-            var username = "SYSTEM";
-            if (Win32API.WTSQuerySessionInformation(IntPtr.Zero, cur_session, WTSInfoClass.WTSUserName, out buffer, out strLen) && strLen > 1)
-            {
-                username = Marshal.PtrToStringAnsi(buffer);
-            }
-            return username;
-        }
 
         /// <summary>
         /// 删除文件夹strDir中nDays天以前的文件

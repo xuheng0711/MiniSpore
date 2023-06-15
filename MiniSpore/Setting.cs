@@ -21,10 +21,27 @@ namespace MiniSpore
 
         private void Setting_Load(object sender, EventArgs e)
         {
+            initControl();
             //初始化串口
             loadOpenPortNames();
             //读取数据
             readData();
+        }
+
+        /// <summary>
+        /// 初始化控件
+        /// </summary>
+        private void initControl()
+        {
+            cbTimeSlot1.Items.Clear();
+            cbTimeSlot2.Items.Clear();
+            cbTimeSlot3.Items.Clear();
+            for (int i = 0; i < 24; i++)
+            {
+                cbTimeSlot1.Items.Add(i);
+                cbTimeSlot2.Items.Add(i);
+                cbTimeSlot3.Items.Add(i);
+            }
         }
 
         /// <summary>
@@ -39,9 +56,10 @@ namespace MiniSpore
             int.TryParse(Param.WorkMode, out nWorkMode);
             cbWorkMode.SelectedIndex = nWorkMode;
             tbCollectTime.Text = Param.CollectTime;
-            tbWorkHour.Text = Param.WorkHour;
-            tbWorkMinute.Text = Param.WorkMinute;
             tbChooseImageCount.Text = Param.ChooseImageCount;
+            cbTimeSlot1.SelectedItem = string.IsNullOrEmpty(Param.TimeSlot1) == true ? -1 : int.Parse(Param.TimeSlot1);
+            cbTimeSlot2.SelectedItem = string.IsNullOrEmpty(Param.TimeSlot2) == true ? -1 : int.Parse(Param.TimeSlot2);
+            cbTimeSlot3.SelectedItem = string.IsNullOrEmpty(Param.TimeSlot3) == true ? -1 : int.Parse(Param.TimeSlot3);
         }
 
         /// <summary>
@@ -66,14 +84,27 @@ namespace MiniSpore
             string strGPSPort = cbGPSPort.SelectedItem + "";
             int nWorkMode = cbWorkMode.SelectedIndex;
             string strCollectTime = tbCollectTime.Text.Trim();
-            string strWorkHour = tbWorkHour.Text.Trim();
-            string strWorkMinute = tbWorkMinute.Text.Trim();
             string strChooseImageCount = tbChooseImageCount.Text.Trim();
+            string strTimeSlot1 = cbTimeSlot1.SelectedItem + "";
+            string strTimeSlot2 = cbTimeSlot2.SelectedItem + "";
+            string strTimeSlot3 = cbTimeSlot3.SelectedItem + "";
 
             Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "WorkHour", strWorkHour);
-            Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMinute", strWorkMinute);
             Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
+            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
+            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
+            Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
+
+            if (nWorkMode != int.Parse(Param.WorkMode))
+            {
+                byte[] res = Main.pushWorkMode();
+                if (res == null || res[2] != 0x80)
+                {
+                    MessageBox.Show("工作模式切换失败，请重试", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             if (strPort != Param.SerialPort || strBluetoothPort != Param.BluetoothPort || strGPSPort != Param.GPSPort || nWorkMode != int.Parse(Param.WorkMode))
             {
                 Param.Set_ConfigParm(Main.configfileName, "Config", "SerialPort", strPort);
@@ -89,9 +120,14 @@ namespace MiniSpore
             }
             else
             {
-                Param.CollectTime = strCollectTime;
-                Param.WorkHour = strWorkHour;
-                Param.WorkMinute = strWorkMinute;
+                if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+                {
+                    Param.CollectTime = strCollectTime;
+                    Param.TimeSlot1 = strTimeSlot1;
+                    Param.TimeSlot2 = strTimeSlot2;
+                    Param.TimeSlot3 = strTimeSlot3;
+                    Main.pushTimeSlot();
+                }
                 Param.ChooseImageCount = strChooseImageCount;
                 Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
