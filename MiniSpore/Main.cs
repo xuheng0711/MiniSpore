@@ -611,9 +611,10 @@ namespace MiniSpore
                         string strTimeSlot1 = deviceParams.TimeSlot1 + "";
                         string strTimeSlot2 = deviceParams.TimeSlot2 + "";
                         string strTimeSlot3 = deviceParams.TimeSlot3 + "";
+                        string strChooseImageCount = deviceParams.ChooseImageCount + "";
 
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
-                        Param.ChooseImageCount = deviceParams.ChooseImageCount + "";
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
+                        Param.ChooseImageCount = strChooseImageCount;
 
                         bool isSuccess = true;
                         if (strWorkMode != Param.WorkMode)
