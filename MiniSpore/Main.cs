@@ -200,6 +200,10 @@ namespace MiniSpore
             pushSettingMessage = SendSettingMsg;
             pushTimeSlot = SyncTimeSlot;
             pushWorkMode = PushCurrWorkMode;
+
+            //串口数据绑定事件
+            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
+            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
         }
 
         private void Main_Load(object sender, EventArgs e)
@@ -219,11 +223,6 @@ namespace MiniSpore
             {
                 return;
             }
-
-            //串口数据绑定事件
-            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
-            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
-
             //初始化通讯方式
             if (Param.CommunicateMode == "0")//MQTT通讯方式
             {
