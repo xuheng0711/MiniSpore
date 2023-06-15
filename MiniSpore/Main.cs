@@ -567,6 +567,9 @@ namespace MiniSpore
                             Action = step.ToString(),
                             WorkMode = int.Parse(Param.WorkMode),
                             CollectTime = int.Parse(Param.CollectTime),
+                            TimeSlot1 = int.Parse(Param.TimeSlot1),
+                            TimeSlot2 = int.Parse(Param.TimeSlot2),
+                            TimeSlot3 = int.Parse(Param.TimeSlot3),
                             ChooseImageCount = int.Parse(Param.ChooseImageCount)
                         };
                         bluetoothModel = new BluetoothModel()
@@ -603,10 +606,15 @@ namespace MiniSpore
                         int nOriServerPort = 0;
                         int.TryParse(oriServerPort, out nOriServerPort);
 
+                        string strCollectTime = deviceParams.CollectTime + "";
+                        string strTimeSlot1 = deviceParams.TimeSlot1 + "";
+                        string strTimeSlot2 = deviceParams.TimeSlot2 + "";
+                        string strTimeSlot3 = deviceParams.TimeSlot3 + "";
                         Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", deviceParams.WorkMode + "");
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", deviceParams.CollectTime + "");
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkHour", deviceParams.WorkHour + "");
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMinute", deviceParams.WorkMinute + "");
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
                         Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
 
                         Param.CollectTime = deviceParams.CollectTime + "";
@@ -621,6 +629,14 @@ namespace MiniSpore
                         if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != oriServerIP || deviceParams.ServerPort != nOriServerPort || deviceParams.WorkMode + "" != Param.WorkMode)
                         {
                             Tools.RestStart();
+                        }
+                        if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+                        {
+                            Param.CollectTime = strCollectTime;
+                            Param.TimeSlot1 = strTimeSlot1;
+                            Param.TimeSlot2 = strTimeSlot2;
+                            Param.TimeSlot3 = strTimeSlot3;
+                            SyncTimeSlot();
                         }
                         break;
 
@@ -1545,20 +1561,34 @@ namespace MiniSpore
                         if (!string.IsNullOrEmpty(protocol.message + ""))
                         {
                             SettingInfo settingInfo = JsonConvert.DeserializeObject<SettingInfo>(protocol.message + "");
+
+                            string strCollectTime = settingInfo.CollectTime;
+                            string strTimeSlot1 = settingInfo.TimeSlot1;
+                            string strTimeSlot2 = settingInfo.TimeSlot2;
+                            string strTimeSlot3 = settingInfo.TimeSlot3;
                             Param.Set_ConfigParm(configfileName, "Config", "WorkMode", settingInfo.WorkMode);
-                            Param.Set_ConfigParm(configfileName, "Config", "CollectTime", settingInfo.CollectTime);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot1", settingInfo.TimeSlot1);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot2", settingInfo.TimeSlot2);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot3", settingInfo.TimeSlot3);
+                            Param.Set_ConfigParm(configfileName, "Config", "CollectTime", strCollectTime);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot1", strTimeSlot1);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot2", strTimeSlot2);
+                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot3", strTimeSlot3);
                             Param.Set_ConfigParm(configfileName, "Config", "ChooseImageCount", settingInfo.ChooseImageCount);
                             if (settingInfo.WorkMode != Param.WorkMode)
                             {
                                 SendCommonMsg(201, "");
                                 Tools.RestStart();
                             }
+                            if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+                            {
+                                Param.CollectTime = strCollectTime;
+                                Param.TimeSlot1 = strTimeSlot1;
+                                Param.TimeSlot2 = strTimeSlot2;
+                                Param.TimeSlot3 = strTimeSlot3;
+                                SyncTimeSlot();
+                            }
                             Param.WorkMode = settingInfo.WorkMode;
                             Param.CollectTime = settingInfo.CollectTime;
                             Param.ChooseImageCount = settingInfo.ChooseImageCount;
+                            SendCommonMsg(201, "");
                         }
                         break;
                 }
@@ -2088,7 +2118,7 @@ namespace MiniSpore
             int.TryParse(Param.WorkMode, out nWorkMode);
             string strHex = step.ToString("x2") + nWorkMode.ToString("x2");
             byte[] byteHex = Tools.HexStrTobyte(strHex);
-            int value = BitConverter.ToInt32(byteHex, 0);
+            int value = BitConverter.ToInt16(byteHex, 0);
             byte[] res = OperaCommand(0x80, value);
             return res;
         }
