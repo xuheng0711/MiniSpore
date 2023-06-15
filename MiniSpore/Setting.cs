@@ -97,8 +97,8 @@ namespace MiniSpore
 
             if (nWorkMode != int.Parse(Param.WorkMode))
             {
-                byte[] res = Main.pushWorkMode();
-                if (res == null || res[2] != 0x80)
+                byte[] res = Main.pushWorkMode(nWorkMode.ToString(), false);
+                if (res == null || res.Length != 8 || res[5] != 0x00)
                 {
                     MessageBox.Show("工作模式切换失败，请重试", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;

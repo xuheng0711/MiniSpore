@@ -28,8 +28,8 @@ using System.Windows.Forms;
 namespace MiniSpore
 {
     public delegate void PushSettingMessage();
-    public delegate void PushTimeSlot();
-    public delegate byte[] PushWorkMode();
+    public delegate bool PushTimeSlot();
+    public delegate byte[] PushWorkMode(string workMode, bool isStep);
 
     public partial class Main : Form
     {
@@ -208,25 +208,21 @@ namespace MiniSpore
             TimerInit();
             //初始化参数
             Param.Init_Param(configfileName);
-            //初始化串口信息
-            if (!SerialInit())
-            {
-                return;
-            }
-            byte[] res = PushCurrWorkMode();
-            if (res == null || res[2] != 0x80)
-            {
-                errorMessage = "主串口通讯异常";
-                return;
-            }
-            //串口数据绑定事件
-            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
-            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
 
             //初始化控件
             Thread workThread = new Thread(new ThreadStart(Init));
             workThread.IsBackground = true;
             workThread.Start();
+
+            //初始化串口信息
+            if (!SerialInit())
+            {
+                return;
+            }
+
+            //串口数据绑定事件
+            bluetoothSerialPort.DataReceived += new SerialDataReceivedEventHandler(bluetoothSerialPort_DataReceived);
+            gpsSerialPort.DataReceived += new SerialDataReceivedEventHandler(gpsSerialPort_DataReceived);
 
             //初始化通讯方式
             if (Param.CommunicateMode == "0")//MQTT通讯方式
@@ -243,9 +239,10 @@ namespace MiniSpore
             }
 
             //发送采集时间与时间段
-            Thread timeSlotThread = new Thread(new ThreadStart(SyncTimeSlot));
-            timeSlotThread.IsBackground = true;
-            timeSlotThread.Start();
+            if (!SyncTimeSlot())
+            {
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "同步采集时间点与采集时间失败");
+            }
 
             //发送蓝牙数据
             serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
@@ -459,7 +456,7 @@ namespace MiniSpore
         /// <summary>
         /// 同步采集时间段
         /// </summary>
-        private void SyncTimeSlot()
+        private bool SyncTimeSlot()
         {
             int nTimeSlot1 = 0;
             int.TryParse(Param.TimeSlot1, out nTimeSlot1);
@@ -476,7 +473,13 @@ namespace MiniSpore
             if (res == null)
             {
                 errorMessage = "主串口通讯异常";
+                return false;
             }
+            if (res.Length != 8 || res[6] != 0x00)
+            {
+                return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -591,7 +594,6 @@ namespace MiniSpore
                         {
                             Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerIP", strServerIP);
                             Param.Set_ConfigParm(Main.configfileName, "Config", "MQTTServerPort", nServerPort + "");
-
                             oriServerIP = Param.MQTTServerIP;
                             oriServerPort = Param.MQTTServerPort;
                         }
@@ -599,44 +601,66 @@ namespace MiniSpore
                         {
                             Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerIP", strServerIP);
                             Param.Set_ConfigParm(Main.configfileName, "Config", "SocketServerPort", nServerPort + "");
-
                             oriServerIP = Param.SocketServerIP;
                             oriServerPort = Param.SocketServerPort;
                         }
                         int nOriServerPort = 0;
                         int.TryParse(oriServerPort, out nOriServerPort);
-
+                        string strWorkMode = deviceParams.WorkMode + "";
                         string strCollectTime = deviceParams.CollectTime + "";
                         string strTimeSlot1 = deviceParams.TimeSlot1 + "";
                         string strTimeSlot2 = deviceParams.TimeSlot2 + "";
                         string strTimeSlot3 = deviceParams.TimeSlot3 + "";
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", deviceParams.WorkMode + "");
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
-                        Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
 
-                        Param.CollectTime = deviceParams.CollectTime + "";
+                        Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", deviceParams.ChooseImageCount + "");
                         Param.ChooseImageCount = deviceParams.ChooseImageCount + "";
+
+                        bool isSuccess = true;
+                        if (strWorkMode != Param.WorkMode)
+                        {
+                            res = PushCurrWorkMode(strWorkMode, false);
+                            if (res == null || res.Length != 8 || res[5] != 0x00)
+                            {
+                                isSuccess = false;
+                                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "蓝牙修改运行模式失败");
+                            }
+                            else
+                            {
+                                Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", strWorkMode);
+                            }
+                        }
+                        if (isSuccess)
+                        {
+                            if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+                            {
+                                if (!SyncTimeSlot())
+                                {
+                                    isSuccess = false;
+                                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "蓝牙修改采集时间点失败");
+                                }
+                                else
+                                {
+                                    Param.Set_ConfigParm(Main.configfileName, "Config", "CollectTime", strCollectTime);
+                                    Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot1", strTimeSlot1);
+                                    Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot2", strTimeSlot2);
+                                    Param.Set_ConfigParm(Main.configfileName, "Config", "TimeSlot3", strTimeSlot3);
+                                    Param.CollectTime = strCollectTime;
+                                    Param.TimeSlot1 = strTimeSlot1;
+                                    Param.TimeSlot2 = strTimeSlot2;
+                                    Param.TimeSlot3 = strTimeSlot3;
+                                }
+                            }
+                        }
 
                         bluetoothModel = new BluetoothModel()
                         {
                             Func = 202,
-                            Message = "success"
+                            Message = isSuccess == true ? "success" : "fail"
                         };
                         serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
-                        if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != oriServerIP || deviceParams.ServerPort != nOriServerPort || deviceParams.WorkMode + "" != Param.WorkMode)
+                        if (deviceParams.DeviceID != Param.DeviceID || deviceParams.CommunicateMode + "" != Param.CommunicateMode || deviceParams.ServerIP != oriServerIP || deviceParams.ServerPort != nOriServerPort || strWorkMode != Param.WorkMode)
                         {
                             Tools.RestStart();
-                        }
-                        if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
-                        {
-                            Param.CollectTime = strCollectTime;
-                            Param.TimeSlot1 = strTimeSlot1;
-                            Param.TimeSlot2 = strTimeSlot2;
-                            Param.TimeSlot3 = strTimeSlot3;
-                            SyncTimeSlot();
                         }
                         break;
 
@@ -1562,33 +1586,56 @@ namespace MiniSpore
                         {
                             SettingInfo settingInfo = JsonConvert.DeserializeObject<SettingInfo>(protocol.message + "");
 
+                            string strWorkMode = settingInfo.WorkMode;
                             string strCollectTime = settingInfo.CollectTime;
                             string strTimeSlot1 = settingInfo.TimeSlot1;
                             string strTimeSlot2 = settingInfo.TimeSlot2;
                             string strTimeSlot3 = settingInfo.TimeSlot3;
-                            Param.Set_ConfigParm(configfileName, "Config", "WorkMode", settingInfo.WorkMode);
-                            Param.Set_ConfigParm(configfileName, "Config", "CollectTime", strCollectTime);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot1", strTimeSlot1);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot2", strTimeSlot2);
-                            Param.Set_ConfigParm(configfileName, "Config", "TimeSlot3", strTimeSlot3);
                             Param.Set_ConfigParm(configfileName, "Config", "ChooseImageCount", settingInfo.ChooseImageCount);
-                            if (settingInfo.WorkMode != Param.WorkMode)
+
+                            bool isSuccess = true;
+                            if (strWorkMode != Param.WorkMode)
                             {
-                                SendCommonMsg(201, "");
+                                byte[] res = PushCurrWorkMode(strWorkMode, false);
+                                if (res == null || res.Length != 8 || res[5] != 0x00)
+                                {
+                                    isSuccess = false;
+                                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "平台修改运行模式失败");
+                                }
+                                else
+                                {
+                                    Param.Set_ConfigParm(configfileName, "Config", "WorkMode", strWorkMode);
+                                }
+                            }
+                            if (isSuccess)
+                            {
+                                if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
+                                {
+
+                                    if (!SyncTimeSlot())
+                                    {
+                                        isSuccess = false;
+                                        DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "平台修改采集时间点失败");
+                                    }
+                                    else
+                                    {
+                                        Param.Set_ConfigParm(configfileName, "Config", "CollectTime", strCollectTime);
+                                        Param.Set_ConfigParm(configfileName, "Config", "TimeSlot1", strTimeSlot1);
+                                        Param.Set_ConfigParm(configfileName, "Config", "TimeSlot2", strTimeSlot2);
+                                        Param.Set_ConfigParm(configfileName, "Config", "TimeSlot3", strTimeSlot3);
+                                        Param.CollectTime = strCollectTime;
+                                        Param.TimeSlot1 = strTimeSlot1;
+                                        Param.TimeSlot2 = strTimeSlot2;
+                                        Param.TimeSlot3 = strTimeSlot3;
+                                    }
+                                }
+                            }
+                            SendCommonMsg(201, isSuccess == true ? "success" : "fail");
+                            if (strWorkMode != Param.WorkMode)
+                            {
                                 Tools.RestStart();
                             }
-                            if (strCollectTime != Param.CollectTime || strTimeSlot1 != Param.TimeSlot1 || strTimeSlot2 != Param.TimeSlot2 || strTimeSlot3 != Param.TimeSlot3)
-                            {
-                                Param.CollectTime = strCollectTime;
-                                Param.TimeSlot1 = strTimeSlot1;
-                                Param.TimeSlot2 = strTimeSlot2;
-                                Param.TimeSlot3 = strTimeSlot3;
-                                SyncTimeSlot();
-                            }
-                            Param.WorkMode = settingInfo.WorkMode;
-                            Param.CollectTime = settingInfo.CollectTime;
                             Param.ChooseImageCount = settingInfo.ChooseImageCount;
-                            SendCommonMsg(201, "");
                         }
                         break;
                 }
@@ -2112,10 +2159,17 @@ namespace MiniSpore
         /// </summary>
         /// <param name=""></param>
         /// <returns></returns>
-        private byte[] PushCurrWorkMode()
+        private byte[] PushCurrWorkMode(string workMode = "", bool isStep = true)
         {
             int nWorkMode = 0;
-            int.TryParse(Param.WorkMode, out nWorkMode);
+            if (isStep)
+            {
+                nWorkMode = 255;
+            }
+            else
+            {
+                int.TryParse(workMode, out nWorkMode);
+            }
             string strHex = step.ToString("x2") + nWorkMode.ToString("x2");
             byte[] byteHex = Tools.HexStrTobyte(strHex);
             int value = BitConverter.ToInt16(byteHex, 0);
