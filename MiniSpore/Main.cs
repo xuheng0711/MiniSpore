@@ -37,6 +37,12 @@ namespace MiniSpore
         public static PushTimeSlot pushTimeSlot;
         public static PushWorkMode pushWorkMode;
         private string errorMessage = "";
+        /// <summary>
+        /// 是否可以运行程序
+        /// </summary>
+        private bool isRun = false;
+        //判断是否联网
+        private bool isOnline = false;
         //拍照步数
         private int photoStep = 20;
         //位置标记
@@ -223,6 +229,10 @@ namespace MiniSpore
             {
                 return;
             }
+
+            //初始化工作模式
+            InitWorkMode();
+
             //初始化通讯方式
             if (Param.CommunicateMode == "0")//MQTT通讯方式
             {
@@ -236,12 +246,6 @@ namespace MiniSpore
                 myThread.IsBackground = true;
                 myThread.Start();
             }
-
-            //发送采集时间与时间段
-            //if (!SyncTimeSlot())
-            //{
-            //    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "同步采集时间点与采集时间失败");
-            //}
 
             //发送蓝牙数据
             serialPortCtrl.SendMsg(bluetoothSerialPort, "AT");
@@ -331,6 +335,34 @@ namespace MiniSpore
             return isSuccess;
         }
 
+        /// <summary>
+        /// 初始化工作模式
+        /// </summary>
+        private void InitWorkMode()
+        {
+            byte[] res = readDeviceState();
+            if (res != null && res[2] == 0xA0)
+            {
+                string strWorkMode = "";
+                switch (res[3])
+                {
+                    case 0x00:
+                        strWorkMode = "0"; break;
+                    case 0x01:
+                        strWorkMode = "1"; break;
+                    case 0x02:
+                        strWorkMode = "2"; break;
+                }
+                if (Param.WorkMode != strWorkMode)
+                {
+                    Param.Set_ConfigParm(Main.configfileName, "Config", "WorkMode", strWorkMode);
+                    Tools.RestStart();
+                }
+            }
+        }
+        /// <summary>
+        /// 初始化控件
+        /// </summary>
         private void Init()
         {
             this.Invoke(new EventHandler(delegate
@@ -379,7 +411,7 @@ namespace MiniSpore
 
             //定时运行程序
             timer4.Elapsed += new ElapsedEventHandler(timer4_Elapsed);
-            timer4.Interval = 5 * 1000;
+            timer4.Interval = 3 * 1000;
 
             //设备状态
             timer5.Elapsed += new ElapsedEventHandler(timer5_Elapsed);
@@ -549,31 +581,7 @@ namespace MiniSpore
                         serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                         break;
                     case 201:
-                        int nCommunicateMode = int.Parse(Param.CommunicateMode);
-                        if (nCommunicateMode == 0)//mqtt
-                        {
-                            strServerIP = Param.MQTTServerIP;
-                            nServerPort = int.Parse(Param.MQTTServerPort);
-                        }
-                        else
-                        {
-                            strServerIP = Param.SocketServerIP;
-                            nServerPort = int.Parse(Param.SocketServerPort);
-                        }
-                        deviceParams = new DeviceParams()
-                        {
-                            DeviceID = Param.DeviceID,
-                            CommunicateMode = nCommunicateMode,
-                            ServerIP = strServerIP,
-                            ServerPort = nServerPort,
-                            Action = step.ToString(),
-                            WorkMode = int.Parse(Param.WorkMode),
-                            CollectTime = int.Parse(Param.CollectTime),
-                            TimeSlot1 = int.Parse(Param.TimeSlot1),
-                            TimeSlot2 = int.Parse(Param.TimeSlot2),
-                            TimeSlot3 = int.Parse(Param.TimeSlot3),
-                            ChooseImageCount = int.Parse(Param.ChooseImageCount)
-                        };
+                        deviceParams = readDeviceParams();
                         bluetoothModel = new BluetoothModel()
                         {
                             Func = 201,
@@ -762,6 +770,45 @@ namespace MiniSpore
         }
 
         /// <summary>
+        /// 读取设备参数信息
+        /// </summary>
+        /// <returns></returns>
+        private DeviceParams readDeviceParams()
+        {
+            int nCommunicateMode = int.Parse(Param.CommunicateMode);
+            string strServerIP = "";
+            int nServerPort = 0;
+            if (nCommunicateMode == 0)//mqtt
+            {
+                strServerIP = Param.MQTTServerIP;
+                nServerPort = int.Parse(Param.MQTTServerPort);
+            }
+            else
+            {
+                strServerIP = Param.SocketServerIP;
+                nServerPort = int.Parse(Param.SocketServerPort);
+            }
+            DeviceParams deviceParams = new DeviceParams()
+            {
+                DeviceID = Param.DeviceID,
+                CommunicateMode = nCommunicateMode,
+                ServerIP = strServerIP,
+                ServerPort = nServerPort,
+                Action = step.ToString(),
+                WorkMode = int.Parse(Param.WorkMode),
+                CollectTime = int.Parse(Param.CollectTime),
+                TimeSlot1 = int.Parse(Param.TimeSlot1),
+                TimeSlot2 = int.Parse(Param.TimeSlot2),
+                TimeSlot3 = int.Parse(Param.TimeSlot3),
+                ChooseImageCount = int.Parse(Param.ChooseImageCount),
+                IsNetwork = isOnline == true ? 1 : 0,
+                ErrorCode = getErrorCode(errorMessage)
+            };
+            return deviceParams;
+        }
+
+
+        /// <summary>
         /// GPS接收数据
         /// </summary>
         /// <param name="sender"></param>
@@ -914,18 +961,31 @@ namespace MiniSpore
             if (Interlocked.Exchange(ref inTimer3, 1) == 0)
             {
                 string strWorkMode = Param.WorkMode;
-                if (strWorkMode == "1")
+                if (!string.IsNullOrEmpty(strWorkMode))
                 {
-                    //调试（不运行）
-                    Timer3Stop();
-                }
-                else
-                {
-                    ////正常（开机即运行，只运行一次）
-                    //自动（循环运行）
-                    step = 0;
-                    Timer1Start();
-                    Timer3Stop();
+                    if (strWorkMode == "0")
+                    {
+                        //正常（开机即运行，只运行一次）
+                        if (isRun)
+                        {
+                            //自动（循环运行）
+                            step = 0;
+                            Timer1Start();
+                            Timer3Stop();
+                        }
+                    }
+                    else if (strWorkMode == "1")
+                    {
+                        //调试（不运行）
+                        Timer3Stop();
+                    }
+                    else if (strWorkMode == "2")
+                    {
+                        //自动（循环运行）
+                        step = 0;
+                        Timer1Start();
+                        Timer3Stop();
+                    }
                 }
                 Interlocked.Exchange(ref inTimer3, 0);
             }
@@ -964,6 +1024,19 @@ namespace MiniSpore
                     }
                 }
                 showError(errorMessage);
+
+                //蓝牙推送设备信息
+                if (isReceiveBluetooth)
+                {
+                    DeviceParams deviceParams = readDeviceParams();
+                    BluetoothModel bluetoothModel = new BluetoothModel()
+                    {
+                        Func = 201,
+                        Message = deviceParams
+                    };
+                    serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+                }
+
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -977,21 +1050,7 @@ namespace MiniSpore
         {
             if (Interlocked.Exchange(ref inTimer5, 1) == 0)
             {
-                //判断是否联网
-                bool isOnline = false;
-                int flag = 0;
-                if (Win32API.InternetGetConnectedState(out flag, 0))
-                {
-                    isOnline = true;
-                }
-
-                bool isFault = false;
-                if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    isFault = true;
-                }
-                string str2Hex = string.Format("000{2}{1}{0}00", isFault == true ? 1 : 0, isReceiveBluetooth == false ? 1 : 0, isOnline == false ? 1 : 0);
-                byte[] res = OperaCommand(0xA0, Convert.ToInt32(str2Hex, 2));
+                byte[] res = readDeviceState();
                 if (res != null && res[2] == 0xA0)
                 {
                     int dirs = res[6];
@@ -1012,15 +1071,45 @@ namespace MiniSpore
                         isBand = true;
                     }
 
+                    if (res[4] == 0x03)
+                    {
+                        isRun = true;
+                    }
+
                     //发送设备异常信息
                     SendDeviceAbnormal(isBand, isAlarm);
-
+                    //时间校准
+                    CalibrationTime();
                 }
                 Interlocked.Exchange(ref inTimer5, 0);
             }
         }
 
+        /// <summary>
+        /// 读取设备状态
+        /// </summary>
+        /// <returns></returns>
+        private byte[] readDeviceState()
+        {
+            int flag = 0;
+            if (Win32API.InternetGetConnectedState(out flag, 0))
+            {
+                isOnline = true;
+            }
+            else
+            {
+                isOnline = false;
+            }
 
+            bool isFault = false;
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                isFault = true;
+            }
+            string str2Hex = string.Format("000{2}{1}{0}00", isFault == true ? 1 : 0, isReceiveBluetooth == false ? 1 : 0, isOnline == false ? 1 : 0);
+            byte[] res = OperaCommand(0xA0, Convert.ToInt32(str2Hex, 2));
+            return res;
+        }
         /// <summary>
         /// 初始化
         /// </summary>
@@ -1163,7 +1252,8 @@ namespace MiniSpore
             int focusCount = 0;
             int imageCount = 0;
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始对焦");
-            while (focusCount <= int.Parse(Param.MaxFocusCount))
+            int nMaxFocusCount = int.Parse(Param.MaxFocusCount);
+            while (focusCount <= nMaxFocusCount)
             {
                 //移动轴二对焦
                 OperaCommand(0x22, photoStep);
@@ -1176,8 +1266,13 @@ namespace MiniSpore
                 {
                     continue;
                 }
-                //分析图像
-                if (!ImageAnalysis(imagePath))
+                bool isSuccess = true;
+                if (focusCount < nMaxFocusCount)//如果对焦到最大数还没获取到图像，则选取最后一张图片上传
+                {
+                    //分析图像
+                    isSuccess = ImageAnalysis(imagePath);
+                }
+                if (!isSuccess)
                 {
                     Thread.Sleep(1000);
                     File.Delete(imagePath);

@@ -52,8 +52,11 @@ namespace MiniSpore
             cbPort.SelectedItem = Param.SerialPort;
             cbBluetoothPort.SelectedItem = Param.BluetoothPort;
             cbGPSPort.SelectedItem = Param.GPSPort;
-            int nWorkMode = -1;
-            int.TryParse(Param.WorkMode, out nWorkMode);
+            int nWorkMode = 1;
+            if (!string.IsNullOrEmpty(Param.WorkMode))
+            {
+                int.TryParse(Param.WorkMode, out nWorkMode);
+            }
             cbWorkMode.SelectedIndex = nWorkMode;
             tbCollectTime.Text = Param.CollectTime;
             tbChooseImageCount.Text = Param.ChooseImageCount;
@@ -133,7 +136,7 @@ namespace MiniSpore
             }
             else
             {
-              
+
                 Param.ChooseImageCount = strChooseImageCount;
                 Main.pushSettingMessage();
                 MessageBox.Show("设置成功", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
