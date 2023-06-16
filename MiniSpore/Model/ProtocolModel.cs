@@ -25,6 +25,31 @@ namespace MiniSpore.Model
         /// </summary>
         public object message { get; set; }
     }
+
+    public class CollectProtocol
+    {
+        /// <summary>
+        /// 功能码
+        /// </summary>
+        public int func { get; set; }
+        /// <summary>
+        /// 错误信息
+        /// </summary>
+        public string err { get; set; }
+        /// <summary>
+        /// 设备号
+        /// </summary>
+        public string devId { get; set; }
+        /// <summary>
+        /// 信息
+        /// </summary>
+        public object message { get; set; }
+        /// <summary>
+        /// 采集时间
+        /// </summary>
+        public string collectTime { get; set; }
+    }
+
     public class Location
     {
         public double lat;

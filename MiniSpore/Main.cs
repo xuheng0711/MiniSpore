@@ -43,7 +43,7 @@ namespace MiniSpore
         //拍照步数
         private int photoStep = 20;
         //位置标记
-        private int step = 0;
+        private int step = -1;
         ////配置文件地址
         internal static string configfileName = "Config.ini";
         ResourceManager resources = new ResourceManager("MiniSpore.Properties.Resources", typeof(Main).Assembly);
@@ -350,7 +350,7 @@ namespace MiniSpore
             if (res != null && res.Length == 8 && res[2] == 0xA0)
             {
                 string strWorkMode = "";
-                switch (res[5])
+                switch (res[3])
                 {
                     case 0x00:
                         strWorkMode = "0"; break;
@@ -921,7 +921,7 @@ namespace MiniSpore
                 DateTime dateNowTime = DateTime.Now;
                 this.Invoke(new EventHandler(delegate
                 {
-                    if (step == 1)
+                    if (step == 0)
                     {
                         int executime = 30;
                         if (Param.WorkMode == "2")
@@ -933,11 +933,12 @@ namespace MiniSpore
                         if (dateNowTime > executeTime.AddSeconds(executime))
                         {
                             showMessage("无数据");
+                            step = 1;
                             Timer2Stop();
                             Timer1Start();
                         }
                     }
-                    else if (step == 2)
+                    else if (step == 1)
                     {
                         //吸风时长
                         int nCollectTime = int.Parse(Param.CollectTime);
@@ -946,6 +947,7 @@ namespace MiniSpore
                         {
                             showMessage("无数据");
                             OperaCommand(0x94, 0);
+                            step = 2;
                             Timer1Start();
                             Timer2Stop();
                         }
@@ -1042,7 +1044,7 @@ namespace MiniSpore
                     };
                     serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
 
-                    //Thread.Sleep(1000);
+                    Thread.Sleep(1200);
 
                     //推送蓝牙传感器及其他信息
                     SensorOther sensorOther = new SensorOther()
@@ -1212,7 +1214,6 @@ namespace MiniSpore
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", int.Parse(Param.SlideStep)));
             }
 
-            step = 1;
             Timer2Start();
         }
 
@@ -1240,7 +1241,6 @@ namespace MiniSpore
                     return;
                 }
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "打开吸风");
-                step = 2;
                 Timer2Start();
             }
             else
@@ -1723,13 +1723,14 @@ namespace MiniSpore
                 switch (func)
                 {
                     case 101:
+                        CollectProtocol collectProtocol = JsonConvert.DeserializeObject<CollectProtocol>(jsonText);
                         //采集数据（更新状态）
                         string sql = "update Record set Flag=1 where CollectTime=@CollectTime";
                         SQLiteParameter[] parameters =
                         {
                            new SQLiteParameter("@CollectTime", DbType.String)
                         };
-                        parameters[0].Value = protocol.message;
+                        parameters[0].Value = collectProtocol.collectTime;
                         SQLiteHelper.ExecuteNonQuery(sql, parameters);
                         isTransferImage = true;
                         break;
@@ -2330,7 +2331,12 @@ namespace MiniSpore
             {
                 int.TryParse(workMode, out nWorkMode);
             }
-            string strHex = nWorkMode.ToString("x2") + step.ToString("x2");
+            int tempStep = 0;
+            if (step >= 0)
+            {
+                tempStep = step;
+            }
+            string strHex = nWorkMode.ToString("x2") + tempStep.ToString("x2");
             byte[] byteHex = Tools.HexStrTobyte(strHex);
             int value = byteHex[0] * 256 + byteHex[1];
             byte[] res = OperaCommand(0x80, value);
