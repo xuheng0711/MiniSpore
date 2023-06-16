@@ -89,6 +89,15 @@ namespace MiniSpore
         /// </summary>
         private DateTime executeTime;
 
+        /// <summary>
+        /// 温度
+        /// </summary>
+        private double temperature = 0;
+        /// <summary>
+        /// 湿度
+        /// </summary>
+        private double humidity = 0;
+
         #region Timer控件
 
         /// <summary>
@@ -788,6 +797,7 @@ namespace MiniSpore
                 strServerIP = Param.SocketServerIP;
                 nServerPort = int.Parse(Param.SocketServerPort);
             }
+     
             DeviceParams deviceParams = new DeviceParams()
             {
                 DeviceID = Param.DeviceID,
@@ -801,6 +811,8 @@ namespace MiniSpore
                 TimeSlot2 = int.Parse(Param.TimeSlot2),
                 TimeSlot3 = int.Parse(Param.TimeSlot3),
                 ChooseImageCount = int.Parse(Param.ChooseImageCount),
+                Temperature = temperature,
+                Humidity = humidity,
                 IsNetwork = isOnline == true ? 1 : 0,
                 ErrorCode = getErrorCode(errorMessage)
             };
@@ -1037,6 +1049,18 @@ namespace MiniSpore
                     serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                 }
 
+                //读取温湿度
+                byte[] res = OperaCommand(0x30, 0);
+                if (res != null && res.Length == 8 && res[2] == 0x30)
+                {
+                    //温度
+                    temperature = Convert.ToInt16(res[3].ToString("X2") + res[4].ToString("X2"), 16) * 0.1;
+                    //湿度
+                    humidity = (((int)res[5]) * 256 + (int)res[6]) * 0.1;
+                    //发送传感器信息
+                    SendSensorMessage();
+                }
+               
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -1524,6 +1548,34 @@ namespace MiniSpore
                 lon = lon
             };
             model.message = location;
+            string jsonData = JsonConvert.SerializeObject(model);
+            if (Param.CommunicateMode == "0")
+            {
+                if (mqttClient != null)
+                    mqttClient.publishMessage(jsonData);
+            }
+            else
+            {
+                if (socketClient != null)
+                    socketClient.SendMsg(jsonData);
+            }
+        }
+
+        /// <summary>
+        /// 发送温湿度值
+        /// </summary>
+        private void SendSensorMessage()
+        {
+            ProtocolModel model = new ProtocolModel();
+            model.devId = Param.DeviceID;
+            model.func = 106;
+            model.err = "";
+            Sensor sensor = new Sensor()
+            {
+                Temperature = temperature,
+                Humidity = humidity
+            };
+            model.message = sensor;
             string jsonData = JsonConvert.SerializeObject(model);
             if (Param.CommunicateMode == "0")
             {
