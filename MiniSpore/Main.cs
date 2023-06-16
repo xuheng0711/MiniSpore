@@ -1042,7 +1042,7 @@ namespace MiniSpore
                     };
                     serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
 
-                    Thread.Sleep(1000);
+                    //Thread.Sleep(1000);
 
                     //推送蓝牙传感器及其他信息
                     SensorOther sensorOther = new SensorOther()
