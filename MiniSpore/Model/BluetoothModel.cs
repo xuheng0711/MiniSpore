@@ -28,11 +28,6 @@ namespace MiniSpore.Model
         public int TimeSlot2 { get; set; }
         public int TimeSlot3 { get; set; }
         public int ChooseImageCount { get; set; }
-        public double Temperature { get; set; }
-        public double Humidity { get; set; }
-        public int IsNetwork { get; set; }
-        public string ErrorCode { get; set; }
-
     }
 
     public class MotorShaft
@@ -42,6 +37,14 @@ namespace MiniSpore.Model
         /// </summary>
         public int Way { get; set; }
         public int Step { get; set; }
+    }
+
+    public class SensorOther
+    {
+        public double Temperature { get; set; }
+        public double Humidity { get; set; }
+        public int IsNetwork { get; set; }
+        public string ErrorCode { get; set; }
     }
 
 }

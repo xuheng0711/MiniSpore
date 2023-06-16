@@ -24,6 +24,8 @@ namespace MiniSpore.Common
         public static string TimeSlot1 = "";
         public static string TimeSlot2 = "";
         public static string TimeSlot3 = "";
+        public static string SlideStep = "";
+        public static string FilterArea = "";
         //通讯方式
         public static string CommunicateMode = "";//0:MQTT 1:Socket
         public static string MQTTServerIP = "";
@@ -66,6 +68,8 @@ namespace MiniSpore.Common
                 TimeSlot1= Read_ConfigParam(configfileName, "Config", "TimeSlot1");
                 TimeSlot2 = Read_ConfigParam(configfileName, "Config", "TimeSlot2");
                 TimeSlot3 = Read_ConfigParam(configfileName, "Config", "TimeSlot3");
+                SlideStep = Read_ConfigParam(configfileName, "Config", "SlideStep");
+                FilterArea = Read_ConfigParam(configfileName, "Config", "FilterArea");
                 //MQTT协议
                 MQTTServerIP = Read_ConfigParam(configfileName, "Config", "MQTTServerIP");
                 MQTTServerPort = Read_ConfigParam(configfileName, "Config", "MQTTServerPort");

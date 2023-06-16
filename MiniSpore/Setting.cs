@@ -80,6 +80,11 @@ namespace MiniSpore
             cbPort.SelectedIndex = -1;
         }
 
+        /// <summary>
+        /// 保存参数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnSave_Click(object sender, EventArgs e)
         {
             string strPort = cbPort.SelectedItem + "";

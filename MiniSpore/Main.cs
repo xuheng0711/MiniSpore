@@ -7,8 +7,6 @@ using MiniSpore.Model;
 using MvCamCtrl.NET;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
@@ -21,7 +19,6 @@ using System.Resources;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
 
@@ -350,10 +347,10 @@ namespace MiniSpore
         private void InitWorkMode()
         {
             byte[] res = readDeviceState();
-            if (res != null && res[2] == 0xA0)
+            if (res != null && res.Length == 8 && res[2] == 0xA0)
             {
                 string strWorkMode = "";
-                switch (res[3])
+                switch (res[5])
                 {
                     case 0x00:
                         strWorkMode = "0"; break;
@@ -797,7 +794,7 @@ namespace MiniSpore
                 strServerIP = Param.SocketServerIP;
                 nServerPort = int.Parse(Param.SocketServerPort);
             }
-     
+
             DeviceParams deviceParams = new DeviceParams()
             {
                 DeviceID = Param.DeviceID,
@@ -810,11 +807,7 @@ namespace MiniSpore
                 TimeSlot1 = int.Parse(Param.TimeSlot1),
                 TimeSlot2 = int.Parse(Param.TimeSlot2),
                 TimeSlot3 = int.Parse(Param.TimeSlot3),
-                ChooseImageCount = int.Parse(Param.ChooseImageCount),
-                Temperature = temperature,
-                Humidity = humidity,
-                IsNetwork = isOnline == true ? 1 : 0,
-                ErrorCode = getErrorCode(errorMessage)
+                ChooseImageCount = int.Parse(Param.ChooseImageCount)
             };
             return deviceParams;
         }
@@ -1040,11 +1033,29 @@ namespace MiniSpore
                 //蓝牙推送设备信息
                 if (isReceiveBluetooth)
                 {
+                    //推送蓝牙设备信息
                     DeviceParams deviceParams = readDeviceParams();
                     BluetoothModel bluetoothModel = new BluetoothModel()
                     {
                         Func = 201,
                         Message = deviceParams
+                    };
+                    serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
+
+                    Thread.Sleep(1000);
+
+                    //推送蓝牙传感器及其他信息
+                    SensorOther sensorOther = new SensorOther()
+                    {
+                        Temperature = temperature,
+                        Humidity = humidity,
+                        IsNetwork = isOnline == true ? 1 : 0,
+                        ErrorCode = getErrorCode(errorMessage)
+                    };
+                    bluetoothModel = new BluetoothModel()
+                    {
+                        Func = 203,
+                        Message = sensorOther
                     };
                     serialPortCtrl.SendMsg(bluetoothSerialPort, JsonConvert.SerializeObject(bluetoothModel));
                 }
@@ -1054,13 +1065,15 @@ namespace MiniSpore
                 if (res != null && res.Length == 8 && res[2] == 0x30)
                 {
                     //温度
-                    temperature = Convert.ToInt16(res[3].ToString("X2") + res[4].ToString("X2"), 16) * 0.1;
+                    temperature = Convert.ToInt16(res[3].ToString("X2") + res[4].ToString("X2"), 16) * 0.1d;
+                    temperature = Math.Round(temperature, 1);
                     //湿度
-                    humidity = (((int)res[5]) * 256 + (int)res[6]) * 0.1;
+                    humidity = (((int)res[5]) * 256 + (int)res[6]) * 0.1d;
+                    humidity = Math.Round(humidity, 1);
                     //发送传感器信息
                     SendSensorMessage();
                 }
-               
+
                 Interlocked.Exchange(ref inTimer4, 0);
             }
         }
@@ -1190,13 +1203,13 @@ namespace MiniSpore
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
 
                 //拉出载玻带（顺时针）
-                res = OperaCommand(0x11, 1850);
+                res = OperaCommand(0x11, int.Parse(Param.SlideStep));
                 if (res == null)
                 {
                     errorMessage = "主串口通讯异常";
                     return;
                 }
-                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", 1850));
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", int.Parse(Param.SlideStep)));
             }
 
             step = 1;
@@ -2205,7 +2218,7 @@ namespace MiniSpore
                 {
                     //计算包围性状的面积 
                     are = CvInvoke.ContourArea(contours[i], false);
-                    if (are < 3000/*过滤掉面积小于3000的*/)
+                    if (are < int.Parse(Param.FilterArea)/*过滤掉面积小于3000的*/)
                     {
                         continue;
                     }
