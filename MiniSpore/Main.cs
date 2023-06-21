@@ -822,12 +822,15 @@ namespace MiniSpore
         {
             try
             {
-                byte[] data = new byte[200];
-                int length = gpsSerialPort.Read(data, 0, 200);
-                string Read = Encoding.Default.GetString(data, 0, length);
+                Thread.Sleep(500);
+                int length = gpsSerialPort.BytesToRead;
+                byte[] data = new byte[length];
+                gpsSerialPort.Read(data, 0, length);
+                string Read = ASCIIEncoding.ASCII.GetString(data, 0, length);
                 if (Read.Contains("$GPGLL"))
                 {
                     string str = Read.Substring(Read.IndexOf("$GPGLL"));
+                    DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "GPS接收数据:" + str);
                     string[] bby = str.Split(',');
                     if (bby.Count() > 5)
                     {
