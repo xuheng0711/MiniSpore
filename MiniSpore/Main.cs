@@ -77,7 +77,7 @@ namespace MiniSpore
         bool isReceiveBluetooth = false;//是否接收蓝牙数据
         bool isBand = false;//载玻带是否正常
         bool isAlarm = false;//是否震动报警
-        bool isX2 = false;
+        bool isX1 = false;
 
         //传输图像是否完成
         private bool isTransferImage = false;
@@ -875,11 +875,6 @@ namespace MiniSpore
                     errorMessage = "载玻带异常";
                     return;
                 }
-                if (step == 1 && !isX2)
-                {
-                    errorMessage = "限位X2异常";
-                    return;
-                }
                 Timer1Stop();
                 //当前流程
                 setProcess();
@@ -926,7 +921,7 @@ namespace MiniSpore
                 {
                     if (step == 0)
                     {
-                        int executime = 30;
+                        int executime = 45;
                         if (Param.WorkMode == "2")
                         {
                             executime = 90;
@@ -1098,11 +1093,11 @@ namespace MiniSpore
                     int dirs = res[6];
                     if (((dirs >> 0) & 0x01) == 1)
                     {
-                        //isX1 = true;
+                        isX1 = true;
                     }
                     if (((dirs >> 1) & 0x01) == 1)
                     {
-                        isX2 = true;
+                        //isX2 = true;
                     }
                     if (((dirs >> 5) & 0x01) == 1)
                     {
@@ -1157,6 +1152,7 @@ namespace MiniSpore
         /// </summary>
         private void Initialize()
         {
+            byte[] res = null;
             //关闭相机
             CameraClose();
             executeTime = DateTime.Now;
@@ -1164,7 +1160,6 @@ namespace MiniSpore
             //自动模式
             if (Param.WorkMode == "2")
             {
-                byte[] res = null;
                 //发送运行位置
                 res = PushCurrWorkMode();
                 if (res == null)
@@ -1198,14 +1193,14 @@ namespace MiniSpore
                 }
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "关闭吸风");
 
-                //相机到X2位置
-                res = OperaCommand(0x23, 2);
+                //相机到X1位置
+                res = OperaCommand(0x20, 1);
                 if (res == null)
                 {
                     errorMessage = "主串口通讯异常";
                     return;
                 }
-                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X2位置");
+                DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "相机到X1位置");
 
                 //拉出载玻带（顺时针）
                 res = OperaCommand(0x11, int.Parse(Param.SlideStep));
@@ -1216,7 +1211,6 @@ namespace MiniSpore
                 }
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("拉出载玻带，步数为{0}", int.Parse(Param.SlideStep)));
             }
-
             Timer2Start();
         }
 
@@ -1266,6 +1260,15 @@ namespace MiniSpore
                 isStart = StartCollection(ref errorMessage);
                 Thread.Sleep(2000);
             }
+            //移动到初始化位置
+            res = OperaCommand(0x21, int.Parse(Param.InitSteps));
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "轴二相机移动到初始化位置");
+            if (res == null)
+            {
+                errorMessage = "主串口通讯异常";
+                return;
+            }
+            Thread.Sleep(30 * 1000);
             res = PushCurrWorkMode();
             if (res == null)
             {
@@ -1340,7 +1343,7 @@ namespace MiniSpore
             }
 
             step = 3;
-            isX2 = false;
+            isX1 = false;
             showMessage("无数据");
             CameraClose();
             //关闭补光灯
