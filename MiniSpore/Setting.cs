@@ -96,6 +96,25 @@ namespace MiniSpore
             string strTimeSlot1 = cbTimeSlot1.SelectedItem + "";
             string strTimeSlot2 = cbTimeSlot2.SelectedItem + "";
             string strTimeSlot3 = cbTimeSlot3.SelectedItem + "";
+
+            int timeSlot1 = 0;
+            int.TryParse(strTimeSlot1,out timeSlot1);
+            int timeSlot2 = 0;
+            int.TryParse(strTimeSlot2, out timeSlot2);
+            int timeSlot3 = 0;
+            int.TryParse(strTimeSlot3, out timeSlot3);
+
+            if (timeSlot2 <= timeSlot1)
+            {
+                MessageBox.Show("时间点2不能早于时间点1", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (timeSlot3 <= timeSlot2)
+            {
+                MessageBox.Show("时间点3不能早于时间点2", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             Param.Set_ConfigParm(Main.configfileName, "Config", "ChooseImageCount", strChooseImageCount);
 
             if (nWorkMode != int.Parse(Param.WorkMode))

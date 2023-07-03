@@ -924,7 +924,7 @@ namespace MiniSpore
                 DateTime dateNowTime = DateTime.Now;
                 this.Invoke(new EventHandler(delegate
                 {
-                    if (step == 0)
+                    if (step == 0)       
                     {
                         int executime = 30;
                         if (Param.WorkMode == "2")
@@ -2225,6 +2225,7 @@ namespace MiniSpore
                 CvInvoke.FindContours(dst, contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
                 //遍历包围性轮廓的最大长度 
                 double are = 0;
+                double ares = 0;
                 double count = 0;
                 for (int i = 0; i < contours.Size; i++)
                 {
@@ -2234,6 +2235,7 @@ namespace MiniSpore
                     {
                         continue;
                     }
+                    ares += are;
                     count++;
                 }
                 contours.Dispose();
@@ -2241,7 +2243,7 @@ namespace MiniSpore
                 dst.Dispose();
                 gray.Dispose();
                 img.Dispose();
-                if (count > 0)
+                if (count > 10)
                 {
                     isMeet = true;
                 }
