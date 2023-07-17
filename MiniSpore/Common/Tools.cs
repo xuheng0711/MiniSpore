@@ -171,7 +171,7 @@ namespace MiniSpore.Common
         /// </summary>
         public static void WinShutdown()
         {
-            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "计算机自动重启");
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "计算机自动关机");
             System.Diagnostics.Process myProcess = new System.Diagnostics.Process();
             myProcess.StartInfo.FileName = "cmd.exe";//启动cmd命令
             myProcess.StartInfo.UseShellExecute = false;//是否使用系统外壳程序启动进程
@@ -180,7 +180,7 @@ namespace MiniSpore.Common
             myProcess.StartInfo.RedirectStandardError = true;//是否将错误信息写入流
             myProcess.StartInfo.CreateNoWindow = true;//是否在新窗口中启动进程
             myProcess.Start();//启动进程
-            myProcess.StandardInput.WriteLine("shutdown -s");//执行重启计算机命令
+            myProcess.StandardInput.WriteLine("shutdown -s");//执行关机计算机命令
         }
         /// <summary>
         /// 求指定时间和当前时间相差的秒数
