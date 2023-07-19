@@ -20,6 +20,7 @@ namespace MiniSpore.Common
         public static string CollectTime = "";//采集时间
         public static string DateFormat = "yyyy-MM-dd HH:mm:ss";
         public static string MaxFocusCount = "";//最大对焦次数
+        public static string ImageCount = "";//图像数量
         public static string ChooseImageCount = "";//选图张数
         public static string TimeSlot1 = "";
         public static string TimeSlot2 = "";
@@ -65,6 +66,7 @@ namespace MiniSpore.Common
                 CommunicateMode = Read_ConfigParam(configfileName, "Config", "CommunicateMode");
                 WorkMode = Read_ConfigParam(configfileName, "Config", "WorkMode");//运行模式
                 MaxFocusCount = Read_ConfigParam(configfileName, "Config", "MaxFocusCount");
+                ImageCount = Read_ConfigParam(configfileName, "Config", "ImageCount");
                 ChooseImageCount = Read_ConfigParam(configfileName, "Config", "ChooseImageCount");//选图数量
                 TimeSlot1= Read_ConfigParam(configfileName, "Config", "TimeSlot1");
                 TimeSlot2 = Read_ConfigParam(configfileName, "Config", "TimeSlot2");

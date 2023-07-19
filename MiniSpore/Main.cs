@@ -7,6 +7,7 @@ using MiniSpore.Model;
 using MvCamCtrl.NET;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
@@ -924,7 +925,7 @@ namespace MiniSpore
                 DateTime dateNowTime = DateTime.Now;
                 this.Invoke(new EventHandler(delegate
                 {
-                    if (step == 0)       
+                    if (step == 0)
                     {
                         int executime = 30;
                         if (Param.WorkMode == "2")
@@ -1301,6 +1302,7 @@ namespace MiniSpore
             int imageCount = 0;
             DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, "开始对焦");
             int nMaxFocusCount = int.Parse(Param.MaxFocusCount);
+            List<CollectImage> listCollectImage = new List<CollectImage>();
             while (focusCount <= nMaxFocusCount)
             {
                 //移动轴二对焦
@@ -1315,10 +1317,11 @@ namespace MiniSpore
                     continue;
                 }
                 bool isSuccess = true;
+                double areas = 0;
                 if (focusCount < nMaxFocusCount)//如果对焦到最大数还没获取到图像，则选取最后一张图片上传
                 {
                     //分析图像
-                    isSuccess = ImageAnalysis(imagePath);
+                    isSuccess = ImageAnalysis(imagePath, ref areas);
                 }
                 if (!isSuccess)
                 {
@@ -1327,13 +1330,13 @@ namespace MiniSpore
                 }
                 else
                 {
-                    string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
-                    SQLiteParameter[] parameters =
+                    CollectImage collectImage = new CollectImage()
                     {
-                        new SQLiteParameter("@CollectTime", DbType.String)
+                        Areas = areas,
+                        CollectTime = currTime,
+                        ImagePath = imagePath
                     };
-                    parameters[0].Value = currTime.ToString("yyyy-MM-dd HH:mm:ss");
-                    SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                    listCollectImage.Add(collectImage);
                     imageCount++;
                     photoStep = 5;
                 }
@@ -1341,12 +1344,16 @@ namespace MiniSpore
                 focusCount++;
                 showMessage(string.Format("相机第{0}次对焦", focusCount));
                 DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("相机第{0}次对焦", focusCount));
-                if (imageCount >= int.Parse(Param.ChooseImageCount))
+                if (imageCount >= int.Parse(Param.ImageCount))
                 {
                     break;
                 }
             }
-
+            //复选图像
+            if (listCollectImage != null && listCollectImage.Count > 0)
+            {
+                ImageCheck(listCollectImage);
+            }
             step = 3;
             isX2 = false;
             showMessage("无数据");
@@ -2204,7 +2211,7 @@ namespace MiniSpore
         /// </summary>
         /// <param name="path">图像路径</param>
         /// <returns>包围性状所占总面积</returns>
-        private bool ImageAnalysis(string path)
+        private bool ImageAnalysis(string path, ref double areas)
         {
             bool isMeet = false;
             try
@@ -2225,7 +2232,7 @@ namespace MiniSpore
                 CvInvoke.FindContours(dst, contours, null, RetrType.External, ChainApproxMethod.ChainApproxSimple);
                 //遍历包围性轮廓的最大长度 
                 double are = 0;
-                double ares = 0;
+                areas = 0;
                 double count = 0;
                 for (int i = 0; i < contours.Size; i++)
                 {
@@ -2235,7 +2242,7 @@ namespace MiniSpore
                     {
                         continue;
                     }
-                    ares += are;
+                    areas += are;
                     count++;
                 }
                 contours.Dispose();
@@ -2256,6 +2263,35 @@ namespace MiniSpore
             }
         }
 
+        /// <summary>
+        /// 图像复选
+        /// </summary>
+        /// <param name="dicImages"></param>
+        private void ImageCheck(List<CollectImage> listCollectImage)
+        {
+            var listSortImages = listCollectImage.OrderByDescending(x => x.Areas);
+            int chooseImageCount = int.Parse(Param.ChooseImageCount);
+            DebOutPut.WriteLog(LogType.Normal, LogDetailedType.Ordinary, string.Format("共采集图像{0}张;复选{1}张", listCollectImage.Count, chooseImageCount));
+            int count = 0;
+            foreach (CollectImage collectImage in listSortImages)
+            {
+                if (count < chooseImageCount)
+                {
+                    string sql = "insert into Record(Flag,CollectTime)values(0,@CollectTime)";
+                    SQLiteParameter[] parameters =
+                    {
+                        new SQLiteParameter("@CollectTime", DbType.String)
+                    };
+                    parameters[0].Value = collectImage.CollectTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    SQLiteHelper.ExecuteNonQuery(sql, parameters);
+                    continue;
+                }
+                //删除多余的图像
+                Thread.Sleep(1000);
+                File.Delete(collectImage.ImagePath);
+                count++;
+            }
+        }
         /// <summary>
         /// 关闭相机
         /// </summary>
